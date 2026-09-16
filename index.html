@@ -1,0 +1,2126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>月影の探偵騎士団</title>
+<meta name="description" content="剣と魔法の世界を舞台にした探偵ファンタジーRPG。魔法犯罪を調査・推理し、事件の真相を暴け。">
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0b16">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="月影の探偵騎士団">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!--
+  クラウド保存（Firebase・任意）を有効にする場合は、下記コメントを外し、
+  firebase-init.example.js を参考に firebase-init.js を用意してください。
+  詳細は README.md の「クラウド保存（Firebase）」章を参照。
+
+  <script type="module" src="firebase-init.js"></script>
+-->
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --bg-void:#0a0b16;
+  --bg-panel:#161a30;
+  --bg-panel-2:#1c2140;
+  --bg-panel-glass:rgba(22,26,48,0.85);
+  --line-hair:rgba(201,211,224,0.14);
+  --line-gold:rgba(212,175,106,0.45);
+  --line-silver:rgba(180,190,210,0.35);
+  --moon-silver:#c9d3e8;
+  --moon-silver-dim:#8891ab;
+  --arcane-blue:#5b8def;
+  --arcane-blue-soft:rgba(91,141,239,0.18);
+  --royal-purple:#8a6bd8;
+  --royal-purple-soft:rgba(138,107,216,0.18);
+  --gold:#d9b56a;
+  --gold-bright:#f0cf8c;
+  --blood-red:#b23a4d;
+  --text-main:#e9e7f4;
+  --text-sub:#9aa1c4;
+  --text-faint:#666e91;
+  --shadow-deep:0 18px 40px rgba(0,0,0,0.55);
+  --radius-card:14px;
+  --radius-pill:999px;
+  --font-head:'Shippori Mincho', serif;
+  --font-body:'Noto Sans JP', sans-serif;
+  color-scheme: dark;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg-void);
+  font-family:var(--font-body);
+  color:var(--text-main);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+body::before{
+  content:"";
+  position:fixed; inset:0;
+  background:
+    radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.5), transparent),
+    radial-gradient(1px 1px at 80% 10%, rgba(255,255,255,0.35), transparent),
+    radial-gradient(1.5px 1.5px at 60% 70%, rgba(255,255,255,0.4), transparent),
+    radial-gradient(1px 1px at 30% 85%, rgba(255,255,255,0.3), transparent),
+    radial-gradient(1px 1px at 90% 60%, rgba(255,255,255,0.4), transparent),
+    radial-gradient(ellipse at 50% -10%, #1a1f3d 0%, var(--bg-void) 60%);
+  z-index:0;
+}
+.reduced-motion *{ animation:none !important; transition:none !important; }
+@media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
+
+.app-shell{
+  position:relative; z-index:1;
+  max-width:480px;
+  min-height:100vh;
+  margin:0 auto;
+  background:linear-gradient(180deg,#0d0f1e 0%, #0a0b16 100%);
+  box-shadow:var(--shadow-deep);
+  display:flex; flex-direction:column;
+  overflow:hidden;
+}
+
+/* ============ TYPOGRAPHY ============ */
+h1,h2,h3,.font-head{font-family:var(--font-head); font-weight:700; letter-spacing:.02em;}
+p{line-height:1.85; color:var(--text-sub); margin:0 0 .8em;}
+.small{font-size:12px; color:var(--text-faint);}
+
+/* ============ TOP BAR (sub screens) ============ */
+.topbar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 18px 12px;
+  border-bottom:1px solid var(--line-hair);
+  background:linear-gradient(180deg, rgba(20,23,44,0.9), rgba(20,23,44,0.3));
+  flex-shrink:0;
+}
+.topbar .chapter-tag{ font-size:11px; color:var(--gold); letter-spacing:.08em; }
+.topbar .screen-title{ font-family:var(--font-head); font-size:16px; color:var(--moon-silver); margin-top:2px; }
+.topbar .tb-btn{ background:none;border:1px solid var(--line-hair); color:var(--text-sub); border-radius:var(--radius-pill); padding:7px 14px; font-size:12px; font-family:var(--font-body); }
+
+/* ============ SCREENS ============ */
+.screen{ display:none; flex-direction:column; flex:1; min-height:0; }
+.screen.active{ display:flex; animation:fadeIn .35s ease; }
+@keyframes fadeIn{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+.screen-scroll{ flex:1; overflow-y:auto; padding:18px 18px 24px; }
+.screen-scroll.with-nav{ padding-bottom:14px; }
+
+/* ============ ICONS ============ */
+.icon{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.6;vertical-align:middle;}
+.icon.filled{fill:currentColor;stroke:none;}
+
+/* ============ BUTTONS ============ */
+.btn{
+  font-family:var(--font-body); font-weight:600; font-size:15px;
+  border-radius:var(--radius-pill);
+  border:1px solid var(--line-gold);
+  padding:15px 20px;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  cursor:pointer; user-select:none;
+  transition:transform .12s ease, box-shadow .2s ease, opacity .2s ease;
+  color:var(--text-main);
+  background:linear-gradient(180deg, rgba(212,175,106,0.14), rgba(212,175,106,0.04));
+}
+.btn:active{ transform:scale(0.97); box-shadow:0 0 0 3px rgba(212,175,106,0.15) inset; }
+.btn-primary{
+  background:linear-gradient(135deg, #3a5fc4, #6a4bc7 65%, #8a6bd8);
+  border:1px solid rgba(212,175,106,0.6); color:#fff;
+  box-shadow:0 10px 24px rgba(90,80,200,0.35);
+}
+.btn-gold{
+  background:linear-gradient(135deg, #caa15a, #e8c880);
+  color:#211607; border:1px solid #fff3d6;
+  box-shadow:0 10px 22px rgba(212,175,106,0.3);
+}
+.btn-ghost{ background:transparent; border:1px solid var(--line-hair); color:var(--text-sub); }
+.btn-block{ width:100%; }
+.btn:disabled{ opacity:.35; pointer-events:none; }
+.btn-sm{ padding:9px 14px; font-size:13px; }
+
+/* ============ CARDS ============ */
+.card{
+  background:var(--bg-panel);
+  border:1px solid var(--line-hair);
+  border-radius:var(--radius-card);
+  padding:16px 16px;
+  position:relative;
+  overflow:hidden;
+}
+.card::before{
+  content:""; position:absolute; top:0; left:0; right:0; height:1px;
+  background:linear-gradient(90deg, transparent, var(--line-gold), transparent);
+}
+.card + .card{ margin-top:12px; }
+.card.gold-edge{ border-color:var(--line-gold); box-shadow:0 0 24px rgba(212,175,106,0.08); }
+
+/* ============ BOTTOM NAV ============ */
+.bottom-nav{
+  display:none; flex-shrink:0;
+  border-top:1px solid var(--line-hair);
+  background:linear-gradient(0deg, rgba(12,14,26,0.97), rgba(16,18,33,0.88));
+  padding:8px 6px calc(8px + env(safe-area-inset-bottom));
+  justify-content:space-around;
+}
+.app-shell.show-nav .bottom-nav{ display:flex; }
+.nav-btn{
+  background:none; border:none; color:var(--text-faint);
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  font-size:10px; font-family:var(--font-body); padding:6px 8px; border-radius:10px;
+  position:relative;
+}
+.nav-btn .icon{ width:20px;height:20px; }
+.nav-btn.active{ color:var(--moon-silver); }
+.nav-btn.active .icon{ color:var(--gold-bright); filter:drop-shadow(0 0 6px rgba(212,175,106,0.6)); }
+.nav-btn.active::after{
+  content:""; position:absolute; bottom:0; left:50%; transform:translateX(-50%);
+  width:16px; height:2px; border-radius:2px; background:var(--gold-bright);
+  box-shadow:0 0 8px rgba(240,207,140,0.8);
+}
+
+/* ============ HOME SCREEN ============ */
+.home-scene{
+  position:relative; height:230px; flex-shrink:0; overflow:hidden;
+  background:
+    radial-gradient(ellipse 90% 70% at 50% -10%, rgba(91,141,239,0.16), transparent 65%),
+    linear-gradient(180deg, #171b38 0%, #10122a 55%, #0b0c1c 100%);
+}
+.scene-moon{
+  position:absolute; top:18px; right:26px; width:64px;height:64px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #fdf4dd, #e8c880 45%, #a9863f 100%);
+  box-shadow:0 0 30px rgba(232,200,128,0.45), 0 0 70px rgba(91,141,239,0.25);
+  animation:moonGlow 6s ease-in-out infinite;
+}
+@keyframes moonGlow{ 0%,100%{ box-shadow:0 0 30px rgba(232,200,128,0.4), 0 0 70px rgba(91,141,239,0.22);} 50%{ box-shadow:0 0 42px rgba(232,200,128,0.6), 0 0 90px rgba(91,141,239,0.32);} }
+.scene-fog{
+  position:absolute; left:-20%; right:-20%; bottom:30%; height:70px;
+  background:radial-gradient(ellipse 40% 100% at 20% 50%, rgba(180,190,220,0.10), transparent 70%),
+             radial-gradient(ellipse 40% 100% at 70% 50%, rgba(180,190,220,0.08), transparent 70%);
+  filter:blur(4px);
+  animation:fogDrift 22s ease-in-out infinite alternate;
+}
+@keyframes fogDrift{ from{ transform:translateX(-4%);} to{ transform:translateX(4%);} }
+.scene-skyline{ position:absolute; left:0; right:0; bottom:34%; height:110px; }
+.scene-skyline svg{ width:100%; height:100%; display:block; }
+.scene-water{ position:absolute; left:0; right:0; bottom:0; height:34%; overflow:hidden; }
+.scene-water svg{ width:100%; height:220%; display:block; transform:scaleY(-1); opacity:.28; }
+.scene-water::after{
+  content:""; position:absolute; inset:0;
+  background:repeating-linear-gradient(180deg, rgba(120,150,220,0.05) 0 2px, transparent 2px 6px);
+  animation:waterShimmer 5s linear infinite;
+}
+@keyframes waterShimmer{ from{ background-position-y:0;} to{ background-position-y:20px;} }
+.scene-lamp{
+  position:absolute; width:5px;height:5px;border-radius:50%; background:var(--gold-bright);
+  box-shadow:0 0 8px 2px rgba(240,207,140,0.9);
+  animation:lampFlicker 3.4s ease-in-out infinite;
+}
+@keyframes lampFlicker{ 0%,100%{ opacity:.7;} 50%{ opacity:1;} }
+.scene-airship{ position:absolute; top:52px; left:-40px; opacity:.75; animation:airshipDrift 46s linear infinite; }
+@keyframes airshipDrift{ from{ transform:translateX(0);} to{ transform:translateX(560px);} }
+
+.home-topbar{
+  position:absolute; top:0; left:0; right:0; z-index:2;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 16px;
+}
+.player-chip{
+  display:flex; align-items:center; gap:8px;
+  background:rgba(10,11,22,0.55); border:1px solid var(--line-hair); border-radius:var(--radius-pill);
+  padding:6px 12px 6px 6px; backdrop-filter:blur(4px);
+}
+.player-chip .avatar{
+  width:28px;height:28px;border-radius:50%; background:linear-gradient(135deg, rgba(91,141,239,0.4), rgba(138,107,216,0.3));
+  border:1px solid var(--line-gold); display:flex; align-items:center; justify-content:center;
+}
+.player-chip .avatar .icon{ width:15px;height:15px; color:var(--gold-bright); }
+.player-chip .pname{ font-size:12px; font-weight:700; color:var(--moon-silver); line-height:1.1; }
+.player-chip .plevel{ font-size:9.5px; color:var(--gold); }
+.home-icon-btn{
+  width:34px;height:34px;border-radius:50%; background:rgba(10,11,22,0.55); border:1px solid var(--line-hair);
+  display:flex;align-items:center;justify-content:center; color:var(--text-sub); backdrop-filter:blur(4px);
+}
+.home-icon-btn .icon{ width:16px;height:16px; }
+.home-icon-row{ display:flex; gap:8px; }
+.home-stat-row{
+  position:absolute; top:56px; left:16px; z-index:2; display:flex; gap:8px;
+}
+.stat-pill{
+  display:flex; align-items:center; gap:5px; background:rgba(10,11,22,0.5); border:1px solid var(--line-hair);
+  border-radius:var(--radius-pill); padding:4px 10px; font-size:10.5px; color:var(--text-sub);
+}
+.stat-pill .icon{ width:12px;height:12px; }
+.stat-pill.gold{ color:var(--gold-bright); border-color:var(--line-gold); }
+
+.home-below-scene{ position:relative; z-index:2; margin-top:-18px; padding:0 18px; flex-shrink:0; }
+.title-block{ text-align:center; padding:6px 0 14px; }
+.game-title{ font-size:23px; color:var(--moon-silver); text-shadow:0 0 18px rgba(120,150,255,0.35); margin:2px 0 2px; }
+.game-title-en{ font-size:10px; letter-spacing:.16em; color:var(--gold); text-transform:uppercase; }
+.game-catch{ font-size:11.5px; color:var(--text-faint); margin-top:6px; }
+
+.case-card{
+  background:linear-gradient(135deg, rgba(91,141,239,0.10), rgba(138,107,216,0.12));
+  border:1px solid var(--line-gold);
+}
+.case-card .cc-label{ font-size:10.5px; color:var(--gold); letter-spacing:.06em; margin-bottom:4px; }
+.case-card .cc-title{ font-family:var(--font-head); font-size:16px; color:var(--moon-silver); margin-bottom:8px; }
+.home-main-actions{ padding:14px 18px 10px; display:flex; flex-direction:column; gap:10px; }
+
+/* ============ FIRST-TIME NAME MODAL uses generic modal ============ */
+
+/* ============ MAP SCREEN ============ */
+.map-canvas{
+  position:relative; flex:1; margin:16px; border-radius:18px; overflow:hidden;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(91,141,239,0.22), transparent 55%),
+    linear-gradient(160deg, #171a30 0%, #0d0f1e 70%);
+  border:1px solid var(--line-hair);
+  min-height:400px;
+}
+.map-path{ position:absolute; left:50%; top:12%; bottom:10%; width:2px; transform:translateX(-50%); background:repeating-linear-gradient(180deg, var(--line-gold) 0 6px, transparent 6px 14px); opacity:.5; }
+.map-node{ position:absolute; left:50%; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; gap:7px; width:190px; }
+.map-node .node-dot{
+  width:56px;height:56px;border-radius:50%; display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 35% 30%, #4a6fe0, #2a3d8f 70%);
+  border:2px solid var(--gold-bright);
+  box-shadow:0 0 0 6px rgba(91,141,239,0.12), 0 0 30px rgba(91,141,239,0.5);
+  animation:pulseNode 2.4s ease-in-out infinite;
+}
+@keyframes pulseNode{ 0%,100%{ box-shadow:0 0 0 6px rgba(91,141,239,0.12), 0 0 30px rgba(91,141,239,0.5);} 50%{ box-shadow:0 0 0 10px rgba(91,141,239,0.18), 0 0 42px rgba(91,141,239,0.7);} }
+.map-node.locked .node-dot{ background:#20233a; border-color:#3a3f5c; box-shadow:none; animation:none; }
+.map-node .node-dot .icon{ color:#fff; width:24px; height:24px; }
+.map-node.locked .node-dot .icon{ color:#565c80; }
+.map-node .node-label{ font-size:12.5px; font-weight:600; color:var(--moon-silver); text-align:center; }
+.map-node .node-status{ font-size:10px; color:var(--gold); letter-spacing:.05em; }
+.map-node .node-meta{ font-size:9.5px; color:var(--text-faint); }
+.map-node.locked .node-status{ color:var(--text-faint); }
+
+/* ============ STORY / DIALOGUE ============ */
+.story-stage{
+  flex:1; position:relative;
+  background:radial-gradient(ellipse 80% 40% at 50% 0%, rgba(138,107,216,0.22), transparent 60%), linear-gradient(180deg, #171a30 0%, #0e1024 100%);
+  display:flex; align-items:center; justify-content:center; min-height:180px;
+}
+.story-portrait{ width:100px;height:100px;border-radius:50%; display:flex;align-items:center;justify-content:center; border:2px solid var(--line-gold); box-shadow:0 0 30px rgba(91,141,239,0.25); }
+.story-portrait .icon{ width:44px; height:44px; }
+.dialogue-box{ margin:0 14px 16px; padding:16px 18px 18px; border-radius:16px; background:var(--bg-panel-glass); border:1px solid var(--line-hair); backdrop-filter:blur(6px); min-height:120px; display:flex; flex-direction:column; }
+.speaker-name{ font-family:var(--font-head); font-size:14px; color:var(--gold-bright); margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+.dialogue-text{ font-size:15px; color:var(--text-main); line-height:1.9; flex:1; }
+.dialogue-next{ align-self:flex-end; margin-top:10px; font-size:12px; color:var(--text-faint); display:flex; align-items:center; gap:6px; animation:bounceHint 1.6s ease-in-out infinite; }
+@keyframes bounceHint{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(4px);} }
+.dialogue-tools{ display:flex; gap:8px; position:absolute; top:10px; right:14px; z-index:3; }
+.dlg-tool-btn{ background:rgba(10,11,22,0.5); border:1px solid var(--line-hair); border-radius:var(--radius-pill); padding:5px 10px; font-size:10px; color:var(--text-sub); }
+
+/* ============ EXPLORE SCREEN ============ */
+.explore-info{ margin:12px 16px 0; padding:12px 14px; }
+.explore-info-row{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.explore-info-row:last-child{ margin-bottom:0; }
+.explore-goal{ font-size:12px; color:var(--text-sub); }
+.explore-goal b{ color:var(--moon-silver); }
+.explore-mini-btns{ display:flex; gap:6px; }
+.mini-btn{ background:var(--bg-panel-2); border:1px solid var(--line-hair); color:var(--text-sub); border-radius:var(--radius-pill); padding:5px 11px; font-size:10.5px; }
+
+.explore-stage{ position:relative; flex:1; margin:12px 14px; border-radius:18px; overflow:hidden; min-height:420px;
+  background:radial-gradient(ellipse 60% 30% at 50% 6%, rgba(91,141,239,0.28), transparent 60%), linear-gradient(180deg, #1a1e38 0%, #10132a 55%, #0c0e20 100%);
+  border:1px solid var(--line-hair);
+}
+.hall-arch{ position:absolute; bottom:0; width:24%; height:76%; border:2px solid rgba(154,161,196,0.16); border-bottom:none; border-radius:60px 60px 0 0; }
+.hall-arch.a1{ left:2%; } .hall-arch.a2{ right:2%; }
+.hall-floorline{ position:absolute; left:0; right:0; bottom:14%; height:1px; background:linear-gradient(90deg, transparent, rgba(201,211,224,0.18), transparent); }
+.explore-caption{ position:absolute; top:12px; left:12px; right:12px; font-size:11.5px; color:var(--text-sub); background:rgba(10,11,22,0.5); padding:7px 11px; border-radius:10px; border:1px solid var(--line-hair); }
+.hotspot{ position:absolute; transform:translate(-50%,-50%); width:52px;height:52px; border-radius:50%; display:flex;align-items:center;justify-content:center; background:rgba(91,141,239,0.14); border:1.5px solid var(--gold); box-shadow:0 0 18px rgba(212,175,106,0.4); animation:hotspotPulse 2.2s ease-in-out infinite; }
+.hotspot.testimony{ border-color:var(--arcane-blue); box-shadow:0 0 18px rgba(91,141,239,0.4); }
+.hotspot .icon{ width:22px;height:22px; color:var(--gold-bright); }
+.hotspot.testimony .icon{ color:#bcd0ff; }
+.hotspot.done{ background:rgba(90,100,140,0.12); border-color:rgba(154,161,196,0.3); box-shadow:none; animation:none; }
+.hotspot.done .icon{ color:var(--text-faint); }
+.hotspot.done::after{ content:"✓"; position:absolute; top:-4px; right:-4px; width:17px;height:17px; border-radius:50%; background:var(--arcane-blue); color:#fff; font-size:10.5px; display:flex; align-items:center; justify-content:center; }
+@keyframes hotspotPulse{ 0%,100%{ box-shadow:0 0 14px rgba(212,175,106,0.35);} 50%{ box-shadow:0 0 26px rgba(212,175,106,0.65);} }
+.hotspot-tag{ position:absolute; bottom:-16px; left:50%; transform:translateX(-50%); font-size:8.5px; white-space:nowrap; color:var(--text-faint); }
+.explore-footer{ padding:12px 16px 18px; }
+
+/* ============ MODAL ============ */
+.modal-overlay{ position:fixed; inset:0; z-index:50; background:rgba(6,7,14,0.72); backdrop-filter:blur(3px); display:none; align-items:flex-end; justify-content:center; }
+.modal-overlay.active{ display:flex; animation:fadeIn .25s ease; }
+.modal-sheet{ width:100%; max-width:480px; background:var(--bg-panel-2); border:1px solid var(--line-gold); border-bottom:none; border-radius:20px 20px 0 0; padding:22px 20px 26px; box-shadow:0 -10px 40px rgba(0,0,0,0.6); animation:slideUp .3s ease; max-height:80vh; overflow-y:auto; }
+@keyframes slideUp{ from{ transform:translateY(30px); opacity:0;} to{ transform:translateY(0); opacity:1; } }
+.modal-icon-row{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.modal-icon-row .icon-badge{ width:40px;height:40px;border-radius:50%; background:var(--royal-purple-soft); display:flex;align-items:center;justify-content:center; border:1px solid var(--line-gold); }
+.modal-icon-row .icon-badge .icon{ width:20px;height:20px; color:var(--gold-bright);}
+.modal-title{ font-family:var(--font-head); font-size:17px; color:var(--moon-silver); }
+.modal-tag{ font-size:11px; color:var(--gold); letter-spacing:.05em; }
+
+/* ============ CASE FILE TABS ============ */
+.case-tabbar{ display:flex; gap:4px; padding:10px 12px 0; overflow-x:auto; flex-shrink:0; }
+.case-tab{ flex-shrink:0; background:none; border:none; border-bottom:2px solid transparent; color:var(--text-faint); font-size:12.5px; font-weight:600; padding:8px 12px 10px; font-family:var(--font-body); }
+.case-tab.active{ color:var(--gold-bright); border-bottom-color:var(--gold-bright); }
+.case-panel{ display:none; }
+.case-panel.active{ display:block; animation:fadeIn .25s ease; }
+
+.kv-row{ display:flex; justify-content:space-between; font-size:12.5px; padding:7px 0; border-bottom:1px dashed var(--line-hair); }
+.kv-row:last-child{ border-bottom:none; }
+.kv-row .k{ color:var(--text-faint); }
+.kv-row .v{ color:var(--moon-silver); font-weight:600; text-align:right; }
+.status-pill{ display:inline-flex; align-items:center; gap:5px; font-size:11px; padding:3px 10px; border-radius:var(--radius-pill); border:1px solid var(--line-hair); color:var(--text-sub); }
+.status-pill.solved{ color:var(--gold-bright); border-color:var(--line-gold); }
+
+.evidence-card{ display:flex; gap:12px; align-items:flex-start; }
+.evidence-card .icon-badge{ flex-shrink:0; width:38px;height:38px;border-radius:10px; background:var(--arcane-blue-soft); display:flex;align-items:center;justify-content:center; border:1px solid var(--line-hair); }
+.evidence-card .icon-badge .icon{ width:18px;height:18px; color:#bcd0ff; }
+.evidence-card.important .icon-badge{ background:var(--royal-purple-soft); box-shadow:0 0 14px rgba(138,107,216,0.35); border-color:var(--line-gold); }
+.evidence-card.important .icon-badge .icon{ color:var(--gold-bright); }
+.evidence-title{ font-size:13.5px; font-weight:600; color:var(--moon-silver); margin-bottom:4px; display:flex; align-items:center; gap:6px;}
+.evidence-desc{ font-size:12px; color:var(--text-sub); line-height:1.7; margin:0;}
+.evidence-meta{ font-size:10px; color:var(--text-faint); margin-top:5px; }
+.tag-chip{ font-size:9.5px; padding:2px 7px; border-radius:var(--radius-pill); border:1px solid var(--line-hair); color:var(--text-faint); }
+
+.person-card{ display:flex; gap:12px; }
+.person-portrait{ flex-shrink:0; width:46px;height:46px;border-radius:50%; display:flex;align-items:center;justify-content:center; border:1.5px solid var(--line-hair); background:var(--bg-panel-2); }
+.person-name{ font-size:14px; font-weight:700; color:var(--moon-silver); }
+.person-role{ font-size:10.5px; color:var(--gold); margin:1px 0 6px; }
+.person-quote{ font-size:12px; color:var(--text-main); background:rgba(91,141,239,0.08); border-left:2px solid var(--arcane-blue); padding:6px 10px; border-radius:6px; margin-bottom:6px; }
+.person-note{ font-size:11.5px; color:var(--text-faint); line-height:1.7; }
+
+.empty-note{ text-align:center; padding:26px 10px; color:var(--text-faint); font-size:12.5px; }
+
+.section-label{ font-size:11px; letter-spacing:.1em; color:var(--gold); margin:18px 0 10px; display:flex; align-items:center; gap:8px; }
+.section-label::after{ content:""; flex:1; height:1px; background:var(--line-hair); }
+.reason-option{ display:flex; gap:12px; align-items:flex-start; width:100%; text-align:left; background:var(--bg-panel-2); border:1px solid var(--line-hair); border-radius:12px; padding:14px; margin-bottom:10px; color:var(--text-main); font-family:var(--font-body); font-size:13.5px; cursor:pointer; transition:border-color .2s, transform .12s; }
+.reason-option:active{ transform:scale(0.98); }
+.reason-option .opt-letter{ flex-shrink:0; width:26px;height:26px;border-radius:50%; background:var(--royal-purple-soft); display:flex;align-items:center;justify-content:center; font-family:var(--font-head); font-size:13px; color:var(--gold-bright); }
+.reason-option.wrong{ border-color:var(--blood-red); opacity:.55; }
+.reason-option.correct{ border-color:var(--gold); background:linear-gradient(135deg, rgba(212,175,106,0.16), rgba(138,107,216,0.1)); }
+.reason-feedback{ font-size:12.5px; color:var(--blood-red); margin:-2px 0 12px; min-height:16px; }
+
+/* ============ BATTLE SCREEN ============ */
+.battle-arena{ position:relative; margin:10px 14px 6px; border-radius:18px; overflow:hidden; min-height:220px;
+  background:radial-gradient(ellipse 70% 50% at 50% 0%, rgba(193,73,90,0.18), transparent 60%), linear-gradient(180deg, #1a1030 0%, #0d0e1e 100%);
+  border:1px solid var(--line-hair); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:16px;
+}
+.enemy-wrap{ display:flex; flex-direction:column; align-items:center; gap:9px; position:relative; }
+.enemy-figure{ width:100px;height:100px; display:flex; align-items:center; justify-content:center; filter:drop-shadow(0 0 22px rgba(193,73,90,0.55)); transition:transform .15s ease; position:relative; }
+.enemy-figure.hit{ animation:shake .35s ease; }
+@keyframes shake{ 0%,100%{transform:translateX(0);} 25%{transform:translateX(-8px);} 75%{transform:translateX(8px);} }
+.enemy-name{ font-family:var(--font-head); font-size:15px; color:#f0b7bd; }
+.enemy-figure.enemy-attack{ animation:enemyLunge .4s ease; }
+@keyframes enemyLunge{ 0%{transform:translateY(0);} 40%{transform:translateY(14px) scale(1.05);} 100%{transform:translateY(0);} }
+.battle-banner{ position:absolute; inset:0; z-index:6; display:flex; align-items:center; justify-content:center; background:rgba(5,5,10,0.5); opacity:0; pointer-events:none; }
+.battle-banner.show{ animation:bannerPulse 1.15s ease forwards; }
+.battle-banner .banner-text{ font-family:var(--font-head); font-size:19px; color:var(--gold-bright); text-shadow:0 0 20px rgba(240,207,140,0.7); border-top:1px solid var(--line-gold); border-bottom:1px solid var(--line-gold); padding:10px 24px; letter-spacing:.05em; text-align:center; }
+@keyframes bannerPulse{ 0%{opacity:0;} 15%{opacity:1;} 78%{opacity:1;} 100%{opacity:0;} }
+.battle-banner.defeat .banner-text{ color:#f0b7bd; border-color:var(--blood-red); }
+.slash-fx{ position:absolute; top:50%; left:50%; width:110px; height:110px; transform:translate(-50%,-50%) rotate(-18deg); pointer-events:none; }
+.slash-fx svg{ width:100%; height:100%; overflow:visible; }
+.slash-fx .sline{ stroke:#fff; stroke-width:3; stroke-linecap:round; opacity:0; stroke-dasharray:140; stroke-dashoffset:140; animation:slashDraw .38s ease forwards; filter:drop-shadow(0 0 6px rgba(255,255,255,0.85)); }
+@keyframes slashDraw{ 0%{opacity:0; stroke-dashoffset:140;} 15%{opacity:1;} 55%{stroke-dashoffset:0; opacity:1;} 100%{opacity:0; stroke-dashoffset:0;} }
+.sparkle-fx{ position:absolute; top:50%; left:50%; width:4px;height:4px; pointer-events:none; }
+.sparkle-dot{ position:absolute; width:5px;height:5px;border-radius:50%; background:var(--gold-bright); box-shadow:0 0 6px rgba(240,207,140,0.9); animation:sparkleBurst .65s ease-out forwards; }
+@keyframes sparkleBurst{ 0%{ transform:translate(0,0) scale(1); opacity:1;} 100%{ transform:translate(var(--dx), var(--dy)) scale(0.3); opacity:0;} }
+.party-card.lunge{ animation:cardLunge .32s ease; }
+@keyframes cardLunge{ 0%{transform:translateX(0);} 45%{transform:translateX(6px) scale(1.03);} 100%{transform:translateX(0);} }
+.party-card.hit-flash{ animation:cardHitFlash .38s ease; }
+@keyframes cardHitFlash{ 0%{box-shadow:0 0 0 0 rgba(193,73,90,0.55);} 50%{box-shadow:0 0 0 6px rgba(193,73,90,0.32);} 100%{box-shadow:0 0 0 0 rgba(193,73,90,0);} }
+.turn-order-row{ display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:8px; }
+.turn-order-row .to-chip{ width:25px;height:25px;border-radius:50%; display:flex;align-items:center;justify-content:center; border:1px solid var(--line-hair); background:var(--bg-panel-2); opacity:.5; }
+.turn-order-row .to-chip.current{ opacity:1; border-color:var(--gold); box-shadow:0 0 10px rgba(212,175,106,0.5); }
+.turn-order-row .to-chip .icon{ width:12px;height:12px; color:var(--moon-silver); }
+.turn-order-row .to-sep{ color:var(--text-faint); font-size:10px; }
+.hpbar-wrap{ width:186px; }
+.hpbar-track{ height:7px; border-radius:4px; background:rgba(255,255,255,0.08); overflow:hidden; }
+.hpbar-fill{ height:100%; border-radius:4px; background:linear-gradient(90deg,#c1495a,#e88a95); transition:width .5s ease; }
+.hpbar-label{ font-size:10.5px; color:var(--text-faint); margin-top:4px; text-align:center; }
+.dmg-pop{ position:absolute; left:50%; top:10%; transform:translateX(-50%); font-family:var(--font-head); font-size:20px; color:#ffd7dc; text-shadow:0 0 8px rgba(193,73,90,0.9); pointer-events:none; animation:dmgFloat .8s ease-out forwards; }
+.dmg-pop.heal{ color:#a8f0c0; text-shadow:0 0 8px rgba(90,220,140,0.9); }
+@keyframes dmgFloat{ 0%{ opacity:0; transform:translate(-50%,0);} 20%{ opacity:1;} 100%{ opacity:0; transform:translate(-50%,-34px);} }
+
+.battle-log{ margin:0 14px; padding:9px 13px; height:58px; overflow-y:auto; background:rgba(10,11,22,0.5); border:1px solid var(--line-hair); border-radius:10px; font-size:12px; color:var(--text-sub); line-height:1.7; }
+.battle-log div{ opacity:.85; }
+.battle-log div:last-child{ color:var(--moon-silver); opacity:1; font-weight:600; }
+
+.party-row{ display:flex; gap:9px; margin:10px 14px 4px; }
+.party-card{ flex:1; background:var(--bg-panel); border:1px solid var(--line-hair); border-radius:12px; padding:9px 10px; position:relative; }
+.party-card.active-turn{ border-color:var(--gold); box-shadow:0 0 0 1px var(--line-gold), 0 0 16px rgba(212,175,106,0.25); }
+.party-card.ko{ opacity:.4; }
+.party-card .pc-name{ font-size:12px; font-weight:700; color:var(--moon-silver); display:flex; justify-content:space-between; }
+.party-card .pc-lv{ font-size:9.5px; color:var(--gold); font-weight:400; }
+.bar-row{ display:flex; align-items:center; gap:5px; margin-top:4px; }
+.bar-row .bar-tag{ font-size:8.5px; width:14px; color:var(--text-faint); }
+.bar-track{ flex:1; height:5px; border-radius:3px; background:rgba(255,255,255,0.08); overflow:hidden; }
+.bar-fill.hp{ height:100%; background:linear-gradient(90deg,#4fbf7a,#8de0aa); transition:width .5s ease; }
+.bar-fill.mp{ height:100%; background:linear-gradient(90deg,#4a7fe0,#8fb3f5); transition:width .5s ease; }
+.defend-tag{ position:absolute; top:7px; right:9px; }
+.defend-tag .icon{ width:13px;height:13px; color:var(--arcane-blue); }
+
+.battle-controls{ padding:10px 14px 16px; }
+.turn-indicator{ text-align:center; font-size:12px; color:var(--gold); margin-bottom:8px; }
+.cmd-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.cmd-btn{ background:var(--bg-panel-2); border:1px solid var(--line-hair); border-radius:12px; padding:11px 8px; display:flex; flex-direction:column; align-items:center; gap:4px; color:var(--text-main); font-size:11.5px; font-weight:600; }
+.cmd-btn .icon{ width:18px;height:18px; color:var(--gold-bright); }
+.cmd-btn .cmd-cost{ font-size:9.5px; color:var(--text-faint); font-weight:400; }
+.battle-toolbar{ display:flex; gap:8px; margin-bottom:8px; }
+.toggle-btn{ flex:1; background:var(--bg-panel-2); border:1px solid var(--line-hair); border-radius:10px; padding:7px; font-size:11px; color:var(--text-sub); font-weight:600; display:flex; align-items:center; justify-content:center; gap:6px; }
+.toggle-btn.on{ border-color:var(--arcane-blue); color:#cfe0ff; background:rgba(91,141,239,0.14); }
+
+/* ============ CHARACTERS ============ */
+.char-card{ display:flex; gap:14px; }
+.char-portrait{ width:58px;height:58px;border-radius:14px; flex-shrink:0; display:flex;align-items:center;justify-content:center; border:1.5px solid var(--line-gold); }
+.char-card.locked .char-portrait{ border-color:var(--line-hair); filter:grayscale(1) opacity(0.5); }
+.char-name{ font-family:var(--font-head); font-size:15px; color:var(--moon-silver); }
+.char-role{ font-size:10.5px; color:var(--gold); margin:1px 0 7px; }
+.char-card.locked .char-name, .char-card.locked .char-role{ color:var(--text-faint); }
+.char-stats{ display:grid; grid-template-columns:1fr 1fr; gap:5px 14px; font-size:11px; color:var(--text-sub); }
+.char-stats b{ color:var(--moon-silver); font-weight:600; }
+.char-bio{ font-size:11px; color:var(--text-faint); margin-top:7px; line-height:1.7; }
+.exp-row{ margin-top:7px; }
+
+/* ---- character selector + tabbed detail ---- */
+.char-select-row{ display:flex; gap:10px; padding:14px 16px 4px; overflow-x:auto; flex-shrink:0; }
+.char-chip{ flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:5px; background:none; border:none; padding:4px; }
+.char-chip .chip-avatar{ width:48px;height:48px;border-radius:50%; display:flex;align-items:center;justify-content:center; border:1.5px solid var(--line-hair); background:var(--bg-panel-2); color:var(--text-faint); }
+.char-chip.active .chip-avatar{ border-color:var(--gold-bright); box-shadow:0 0 14px rgba(212,175,106,0.4); color:var(--gold-bright); }
+.char-chip.locked .chip-avatar{ filter:grayscale(1) opacity(.55); }
+.char-chip .chip-name{ font-size:10px; color:var(--text-faint); }
+.char-chip.active .chip-name{ color:var(--moon-silver); }
+
+.char-hero-card{ margin:12px 16px 0; padding:20px 16px; text-align:center; }
+.char-hero-portrait{ width:82px;height:82px;border-radius:50%; margin:0 auto 12px; display:flex;align-items:center;justify-content:center; border:2px solid var(--line-gold); box-shadow:0 0 30px rgba(91,141,239,0.25); }
+.char-hero-card .ch-name{ font-family:var(--font-head); font-size:18px; color:var(--moon-silver); }
+.char-hero-card .ch-role{ font-size:11px; color:var(--gold); margin:3px 0 10px; }
+.char-hero-card .ch-lv-row{ display:flex; justify-content:center; gap:18px; font-size:11.5px; color:var(--text-sub); }
+.char-hero-card .ch-lv-row b{ color:var(--moon-silver); }
+
+.char-tab, .case-tab{ flex-shrink:0; background:none; border:none; border-bottom:2px solid transparent; color:var(--text-faint); font-size:12px; font-weight:600; padding:8px 11px 10px; font-family:var(--font-body); }
+.char-tab.active, .case-tab.active{ color:var(--gold-bright); border-bottom-color:var(--gold-bright); }
+.char-tabbar{ display:flex; gap:2px; padding:14px 12px 0; overflow-x:auto; flex-shrink:0; }
+.char-panel, .case-panel{ display:none; }
+.char-panel.active, .case-panel.active{ display:block; animation:fadeIn .25s ease; }
+
+.equip-slot-card{ display:flex; align-items:center; gap:12px; }
+.equip-slot-card .icon-badge{ width:42px;height:42px;border-radius:10px; background:var(--royal-purple-soft); display:flex;align-items:center;justify-content:center; border:1px solid var(--line-gold); flex-shrink:0; }
+.equip-slot-card .icon-badge .icon{ width:19px;height:19px; color:var(--gold-bright); }
+.equip-empty{ color:var(--text-faint); font-size:12.5px; }
+.item-row{ display:flex; align-items:center; gap:12px; padding:12px 4px; border-bottom:1px solid var(--line-hair); }
+.item-row:last-child{ border-bottom:none; }
+.item-row .icon-badge{ width:36px;height:36px;border-radius:10px; background:var(--arcane-blue-soft); display:flex;align-items:center;justify-content:center; border:1px solid var(--line-hair); flex-shrink:0; }
+.item-row .icon-badge .icon{ width:16px;height:16px; color:#bcd0ff; }
+.item-name{ font-size:13px; font-weight:600; color:var(--moon-silver); }
+.item-desc{ font-size:11px; color:var(--text-faint); margin-top:2px; line-height:1.6; }
+.item-bonus{ font-size:10.5px; color:var(--gold); margin-top:3px; }
+
+.skill-card{ display:flex; gap:12px; }
+.skill-card .icon-badge{ width:40px;height:40px;border-radius:10px; background:var(--arcane-blue-soft); display:flex;align-items:center;justify-content:center; border:1px solid var(--line-hair); flex-shrink:0; }
+.skill-card .icon-badge .icon{ width:18px;height:18px; color:#bcd0ff; }
+.skill-name{ font-size:13.5px; font-weight:700; color:var(--moon-silver); display:flex; align-items:center; gap:8px; }
+.skill-cost-chip{ font-size:9.5px; color:var(--gold); border:1px solid var(--line-gold); border-radius:var(--radius-pill); padding:1px 8px; }
+.skill-desc{ font-size:12px; color:var(--text-sub); margin-top:4px; line-height:1.7; }
+
+.lore-card{ display:flex; gap:12px; }
+.lore-card .icon-badge{ width:38px;height:38px;border-radius:10px; background:var(--royal-purple-soft); display:flex;align-items:center;justify-content:center; border:1px solid var(--line-gold); flex-shrink:0; }
+.lore-card .icon-badge .icon{ width:17px;height:17px; color:var(--gold-bright); }
+.lore-card.locked .icon-badge{ background:var(--bg-panel-2); border-color:var(--line-hair); }
+.lore-card.locked .icon-badge .icon{ color:var(--text-faint); }
+.lore-title{ font-size:13.5px; font-weight:700; color:var(--moon-silver); }
+.lore-card.locked .lore-title{ color:var(--text-faint); }
+.lore-text{ font-size:12px; color:var(--text-sub); margin-top:5px; line-height:1.75; }
+.lore-hint{ font-size:11px; color:var(--text-faint); margin-top:5px; }
+
+.bond-gauge-wrap{ margin-top:10px; }
+.bond-gauge-track{ height:8px; border-radius:4px; background:rgba(255,255,255,0.08); overflow:hidden; }
+.bond-gauge-fill{ height:100%; border-radius:4px; background:linear-gradient(90deg,#8a6bd8,#f0cf8c); transition:width .6s ease; }
+.bond-level-label{ font-family:var(--font-head); font-size:15px; color:var(--gold-bright); margin-top:10px; }
+.bond-flavor{ font-size:12px; color:var(--text-sub); margin-top:4px; }
+
+/* ============ SETTINGS ============ */
+.setting-row{ display:flex; justify-content:space-between; align-items:center; padding:13px 2px; border-bottom:1px solid var(--line-hair); }
+.setting-row:last-child{ border-bottom:none; }
+.setting-label{ font-size:13.5px; color:var(--text-main); }
+.setting-sub{ font-size:10.5px; color:var(--text-faint); margin-top:2px; }
+.switch{ width:42px;height:24px;border-radius:var(--radius-pill); background:var(--bg-panel-2); border:1px solid var(--line-hair); position:relative; flex-shrink:0; }
+.switch .knob{ position:absolute; top:2px; left:2px; width:18px;height:18px;border-radius:50%; background:var(--text-faint); transition:transform .2s ease, background .2s ease; }
+.switch.on{ background:rgba(91,141,239,0.25); border-color:var(--arcane-blue); }
+.switch.on .knob{ transform:translateX(18px); background:var(--arcane-blue); }
+
+/* ============ RESULT SCREEN ============ */
+.result-blackout{ position:absolute; inset:0; background:#050509; z-index:5; animation:blackoutFade 1s ease forwards; animation-delay:.15s; pointer-events:none; }
+@keyframes blackoutFade{ from{ opacity:1;} to{ opacity:0;} }
+.result-wrap{ position:relative; flex:1; display:flex; flex-direction:column; }
+.result-stamp{ text-align:center; padding:34px 20px 10px; opacity:0; animation:revealFade .6s ease forwards; animation-delay:.5s; }
+.result-stamp .badge{ width:64px;height:64px;border-radius:50%; margin:0 auto 12px; display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 35% 30%, #fdf4dd, #d9b56a 60%, #8a6a2f); box-shadow:0 0 40px rgba(217,181,106,0.5); }
+.result-stamp .badge .icon{ width:30px;height:30px; color:#2b1c05; }
+.result-stamp h2{ font-size:20px; color:var(--gold-bright); margin-bottom:2px; }
+.result-stamp p{ font-size:12px; color:var(--text-faint); }
+.reveal-item{ opacity:0; transform:translateY(8px); animation:revealFade .5s ease forwards; }
+@keyframes revealFade{ to{ opacity:1; transform:translateY(0);} }
+.reward-row{ display:flex; align-items:center; gap:12px; padding:12px 4px; border-bottom:1px dashed var(--line-hair); }
+.reward-row:last-child{ border-bottom:none; }
+.reward-row .icon-badge{ width:36px;height:36px;border-radius:10px; background:var(--royal-purple-soft); display:flex;align-items:center;justify-content:center; border:1px solid var(--line-gold); flex-shrink:0; }
+.reward-row .icon-badge .icon{ width:17px;height:17px; color:var(--gold-bright); }
+.reward-label{ font-size:12px; color:var(--text-faint); }
+.reward-value{ font-size:14.5px; font-weight:700; color:var(--moon-silver); }
+.rank-badge{ font-family:var(--font-head); font-size:26px; color:var(--gold-bright); text-shadow:0 0 16px rgba(240,207,140,0.6); }
+
+/* ============ SOLVED ============ */
+.solved-badge{ width:66px;height:66px;border-radius:50%; margin:8px auto 14px; display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 35% 30%, #fdf4dd, #d9b56a 60%, #8a6a2f); box-shadow:0 0 40px rgba(217,181,106,0.5); }
+.solved-badge .icon{ width:30px;height:30px; color:#2b1c05; }
+.teaser-card{ background:linear-gradient(135deg, rgba(91,141,239,0.1), rgba(138,107,216,0.14)); border:1px solid var(--line-gold); }
+.teaser-lock{ display:flex; align-items:center; gap:8px; font-size:11px; color:var(--text-faint); margin-top:10px;}
+
+::-webkit-scrollbar{ width:5px; height:5px; }
+::-webkit-scrollbar-thumb{ background:rgba(154,161,196,0.25); border-radius:3px; }
+
+@media (min-width:481px){ .app-shell{ margin:16px auto; min-height:calc(100vh - 32px); border-radius:26px; } }
+</style>
+</head>
+<body>
+
+<!-- ============ SVG ICON SPRITE ============ -->
+<svg style="display:none">
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5Z" stroke-linejoin="round"/></symbol>
+<symbol id="i-sword" viewBox="0 0 24 24"><path d="M14.5 3 21 9.5l-2 2-6.5-6.5 2-2Z"/><path d="M12.8 8.2 4 17l-1 4 4-1 8.8-8.8"/><path d="M17.5 6.5l2 2"/></symbol>
+<symbol id="i-rapier" viewBox="0 0 24 24"><path d="M4 20 18 6"/><path d="M15 3l6 6"/><path d="M14 8l-3 3M12 6l-3 3"/></symbol>
+<symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5c3-1.5 6-1.5 8 0v14c-2-1.5-5-1.5-8 0V5Z"/><path d="M20 5c-3-1.5-6-1.5-8 0v14c2-1.5 5-1.5 8 0V5Z"/></symbol>
+<symbol id="i-staff" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.4"/><path d="M12 8v13"/><path d="M8 21h8"/></symbol>
+<symbol id="i-mask" viewBox="0 0 24 24"><path d="M4 9c0-3 3.5-6 8-6s8 3 8 6-3 8-8 8-8-5-8-8Z"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/></symbol>
+<symbol id="i-frame" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M8 17c1-3 2.5-4 4-4s2.5 3 4 3" stroke-dasharray="2 2"/><circle cx="12" cy="9" r="2" stroke-dasharray="2 2"/></symbol>
+<symbol id="i-footprint" viewBox="0 0 24 24"><ellipse cx="9" cy="7" rx="2.4" ry="3.2"/><ellipse cx="16" cy="15" rx="2.4" ry="3.2"/></symbol>
+<symbol id="i-scroll" viewBox="0 0 24 24"><path d="M6 4h11a2 2 0 0 1 2 2v11a2 2 0 0 0 2 2H8a2 2 0 0 1-2-2V4Z"/><path d="M6 4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2"/><path d="M9 9h6M9 13h6"/></symbol>
+<symbol id="i-door" viewBox="0 0 24 24"><path d="M6 21V6c0-1.7 2.7-3 6-3s6 1.3 6 3v15"/><path d="M4 21h16"/><circle cx="14" cy="13" r=".8" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-map" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 5-3.5 7.5-7 9-3.5-1.5-7-4-7-9V6l7-3Z"/></symbol>
+<symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3v5M12 16v5M3 12h5M16 12h5M6 6l3 3M18 6l-3 3M6 18l3-3M18 18l-3-3"/></symbol>
+<symbol id="i-fist" viewBox="0 0 24 24"><path d="M6 10V7a2 2 0 1 1 4 0v3M10 9V6a2 2 0 1 1 4 0v3M14 9V7a2 2 0 1 1 4 0v4M6 11l-2 2v3a4 4 0 0 0 4 4h5a5 5 0 0 0 5-5v-3"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.5-4.5"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 20c1.5-4 4.2-6 7.5-6s6 2 7.5 6"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5L19 7"/></symbol>
+<symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-9.3-9C1.2 7.8 3 4.5 6.5 4.5c2 0 3.5 1.2 4.5 2.7 1-1.5 2.5-2.7 4.5-2.7 3.5 0 5.3 3.3 3.8 6.5C19 15.6 12 20 12 20Z"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 10a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 14 6 10Z"/><path d="M10 19a2 2 0 0 0 4 0"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v2.4M12 18.6V21M21 12h-2.4M5.4 12H3M18.1 5.9l-1.7 1.7M7.6 16.4l-1.7 1.7M18.1 18.1l-1.7-1.7M7.6 7.6 5.9 5.9"/></symbol>
+<symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v9M9.3 15c0 1.1 1.2 2 2.7 2s2.7-.7 2.7-1.8c0-2.6-5.4-1.4-5.4-4C9.3 9.7 10.5 9 12 9s2.7.7 2.7 1.8"/></symbol>
+<symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.5 6.2L21 10l-5 4.4L17.5 21 12 17.3 6.5 21 8 14.4 3 10l6.5-.8Z" stroke-linejoin="round"/></symbol>
+<symbol id="i-flag" viewBox="0 0 24 24"><path d="M6 21V4"/><path d="M6 5c3-1.5 5 1.5 8 0v9c-3 1.5-5-1.5-8 0V5Z"/></symbol>
+</svg>
+
+<div class="app-shell" id="appShell">
+
+  <!-- ============ HOME ============ -->
+  <section class="screen active" id="screen-home">
+    <div class="screen-scroll with-nav" style="padding:0;">
+      <div class="home-scene">
+        <svg class="scene-skyline" viewBox="0 0 480 200" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="skylineGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#232a52"/>
+              <stop offset="100%" stop-color="#0d0f22"/>
+            </linearGradient>
+          </defs>
+          <path d="M0,200 L0,150 L20,150 L20,130 L40,130 L40,150 L60,150 L60,95 L70,95 L70,72 L80,72 L80,95 L90,95 L90,150 L120,150 L120,112 L130,102 L140,112 L140,150 L170,150 L170,58 L180,46 L190,58 L190,150 L230,150 L230,120 L245,120 L245,100 L260,100 L260,120 L275,120 L275,150 L310,150 L310,138 L320,138 L320,150 L340,150 L340,80 L350,68 L360,80 L360,150 L400,150 L400,128 L415,128 L415,150 L440,150 L440,160 L480,160 L480,200 Z" fill="url(#skylineGrad)" stroke="rgba(154,161,196,0.18)" stroke-width="1"/>
+        </svg>
+        <div class="scene-fog"></div>
+        <svg class="scene-water" viewBox="0 0 480 200" preserveAspectRatio="none">
+          <path d="M0,200 L0,150 L20,150 L20,130 L40,130 L40,150 L60,150 L60,95 L70,95 L70,72 L80,72 L80,95 L90,95 L90,150 L120,150 L120,112 L130,102 L140,112 L140,150 L170,150 L170,58 L180,46 L190,58 L190,150 L230,150 L230,120 L245,120 L245,100 L260,100 L260,120 L275,120 L275,150 L310,150 L310,138 L320,138 L320,150 L340,150 L340,80 L350,68 L360,80 L360,150 L400,150 L400,128 L415,128 L415,150 L440,150 L440,160 L480,160 L480,200 Z" fill="#151a34"/>
+        </svg>
+        <div class="scene-lamp" style="left:66px; bottom:64px;"></div>
+        <div class="scene-lamp" style="left:184px; bottom:80px; animation-delay:.8s;"></div>
+        <div class="scene-lamp" style="left:311px; bottom:60px; animation-delay:1.6s;"></div>
+        <div class="scene-lamp" style="left:404px; bottom:70px; animation-delay:2.2s;"></div>
+        <svg class="scene-airship" width="46" height="26" viewBox="0 0 46 26"><ellipse cx="20" cy="10" rx="18" ry="7" fill="#d9b56a" opacity="0.65"/><rect x="14" y="17" width="12" height="5" rx="1.5" fill="#2a2033"/><line x1="16" y1="16" x2="16" y2="19" stroke="#8891ab" stroke-width="0.8"/><line x1="24" y1="16" x2="24" y2="19" stroke="#8891ab" stroke-width="0.8"/></svg>
+        <div class="scene-moon"></div>
+        <div class="home-topbar">
+          <div class="player-chip">
+            <div class="avatar"><svg class="icon"><use href="#i-user"/></svg></div>
+            <div><div class="pname" id="hpName">アレン</div><div class="plevel" id="hpLevel">Lv.1 探偵騎士</div></div>
+          </div>
+          <div class="home-icon-row">
+            <button class="home-icon-btn" id="btnBell"><svg class="icon"><use href="#i-bell"/></svg></button>
+            <button class="home-icon-btn" id="btnGear"><svg class="icon"><use href="#i-gear"/></svg></button>
+          </div>
+        </div>
+        <div class="home-stat-row">
+          <div class="stat-pill"><svg class="icon"><use href="#i-heart"/></svg><span id="hpStamina">5 / 5</span></div>
+          <div class="stat-pill gold"><svg class="icon"><use href="#i-coin"/></svg><span id="hpGold">0</span></div>
+        </div>
+      </div>
+
+      <div class="home-below-scene">
+        <div class="title-block">
+          <div class="game-title-en">Moonlit Detective Knights</div>
+          <h1 class="game-title">月影の探偵騎士団</h1>
+          <p class="game-catch">魔法がある世界で、完全犯罪は成立するのか。</p>
+        </div>
+
+        <div class="card case-card">
+          <div class="cc-label">進行中の事件</div>
+          <div class="cc-title">第一章「消えた肖像画」</div>
+          <p class="small" id="progressNote" style="margin:0;"></p>
+        </div>
+      </div>
+
+      <div class="home-main-actions">
+        <button class="btn btn-primary btn-block" id="btnStart">
+          <svg class="icon"><use href="#i-arrow"/></svg><span id="btnStartLabel">冒険を続ける</span>
+        </button>
+      </div>
+    </div>
+    <!-- bottom-nav injected by JS -->
+  </section>
+
+  <!-- ============ SETTINGS ============ -->
+  <section class="screen" id="screen-settings">
+    <div class="topbar">
+      <div><div class="chapter-tag">メニュー</div><div class="screen-title">設定</div></div>
+      <div></div>
+    </div>
+    <div class="screen-scroll with-nav">
+      <div class="section-label">サウンド</div>
+      <div class="card">
+        <div class="setting-row">
+          <div><div class="setting-label">BGM</div><div class="setting-sub">プロトタイプ版では音声は未実装です</div></div>
+          <div class="switch" id="swBgm"><div class="knob"></div></div>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">効果音</div><div class="setting-sub">ボタン反応などの効果音</div></div>
+          <div class="switch" id="swSe"><div class="knob"></div></div>
+        </div>
+      </div>
+      <div class="section-label">表示</div>
+      <div class="card">
+        <div class="setting-row">
+          <div><div class="setting-label">アニメーションを軽減</div><div class="setting-sub">発光・点滅などの演出を抑えます</div></div>
+          <div class="switch" id="swMotion"><div class="knob"></div></div>
+        </div>
+      </div>
+      <div class="section-label">データ</div>
+      <div class="card">
+        <p class="small" style="margin-bottom:12px;">進行状況・証拠・育成データはこの端末に保存されています。</p>
+        <button class="btn btn-ghost btn-block" id="btnResetSettings">セーブデータをリセットする</button>
+      </div>
+      <div class="section-label">クラウド保存（Firebase・任意）</div>
+      <div class="card">
+        <p class="small" id="cloudStatusText" style="margin-bottom:12px;">この機能は任意です。有効にすると、他の端末からも同じ進行状況で再開できます。</p>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-ghost btn-block" id="btnCloudSave">クラウドに保存</button>
+          <button class="btn btn-ghost btn-block" id="btnCloudLoad">クラウドから復元</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MAP ============ -->
+  <section class="screen" id="screen-map">
+    <div class="topbar">
+      <div><div class="chapter-tag">第一章</div><div class="screen-title">冒険マップ・エルディア王都</div></div>
+      <div></div>
+    </div>
+    <div class="map-canvas">
+      <div class="map-path"></div>
+      <div class="map-node" style="top:18%;" id="mapNodeMuseum">
+        <div class="node-dot"><svg class="icon"><use href="#i-frame"/></svg></div>
+        <div class="node-label">王立美術館</div>
+        <div class="node-status" id="museumStatus">事件受注可能</div>
+        <div class="node-meta">推奨Lv.1 ・ 消費スタミナ 1</div>
+      </div>
+      <div class="map-node locked" style="top:44%;" id="mapNodeCh2">
+        <div class="node-dot"><svg class="icon"><use href="#i-door"/></svg></div>
+        <div class="node-label">忘れられた回廊</div>
+        <div class="node-status" id="ch2Status">第一章クリアで解放</div>
+        <div class="node-meta">推奨Lv.3</div>
+      </div>
+      <div class="map-node locked" style="top:66%;">
+        <div class="node-dot"><svg class="icon"><use href="#i-scroll"/></svg></div>
+        <div class="node-label">王立図書館</div>
+        <div class="node-status">未解放</div>
+        <div class="node-meta">霧に閉ざされている</div>
+      </div>
+      <div class="map-node locked" style="top:88%;">
+        <div class="node-dot"><svg class="icon"><use href="#i-mask"/></svg></div>
+        <div class="node-label">王城 奥書庫</div>
+        <div class="node-status">未解放</div>
+        <div class="node-meta">霧に閉ざされている</div>
+      </div>
+    </div>
+    <p class="small" style="text-align:center;padding:0 20px 16px;">光る場所をタップして調査に向かおう。</p>
+  </section>
+
+  <!-- ============ STORY ============ -->
+  <section class="screen" id="screen-story">
+    <div class="topbar">
+      <div><div class="chapter-tag">第一章 消えた肖像画</div><div class="screen-title" id="storyHeader">王都・大通り</div></div>
+      <div></div>
+    </div>
+    <div class="story-stage">
+      <div class="dialogue-tools"><button class="dlg-tool-btn" id="btnSkip">スキップ</button></div>
+      <div class="story-portrait" id="storyPortrait"></div>
+    </div>
+    <div class="dialogue-box" id="dialogueBox">
+      <div class="speaker-name" id="speakerName"></div>
+      <div class="dialogue-text" id="dialogueText"></div>
+      <div class="dialogue-next" id="dialogueNext">つづける <svg class="icon" style="width:14px;height:14px;"><use href="#i-arrow"/></svg></div>
+    </div>
+  </section>
+
+  <!-- ============ EXPLORE ============ -->
+  <section class="screen" id="screen-explore">
+    <div class="topbar">
+      <div><div class="chapter-tag">事件現場</div><div class="screen-title">王立美術館・肖像画の間</div></div>
+      <div></div>
+    </div>
+    <div class="card explore-info">
+      <div class="explore-info-row">
+        <span class="explore-goal">現在の目的：<b>手がかりと証言を集める</b></span>
+        <span class="small" id="exploreCount">0 / 6</span>
+      </div>
+      <div class="explore-info-row">
+        <span class="small">事件名：消えた肖像画</span>
+        <div class="explore-mini-btns">
+          <button class="mini-btn" id="btnOpenCaseFromExplore">事件簿</button>
+          <button class="mini-btn" id="btnBackToMapFromExplore">戻る</button>
+        </div>
+      </div>
+    </div>
+    <div class="explore-stage" id="exploreStage">
+      <div class="hall-arch a1"></div><div class="hall-arch a2"></div>
+      <div class="hall-floorline"></div>
+      <div class="explore-caption">静まり返った展示室。月明かりが割れた窓から差し込んでいる。金色の印は手がかり、青い印は聞き込みだ。</div>
+    </div>
+    <div class="explore-footer">
+      <button class="btn btn-gold btn-block" id="btnExploreNext" disabled>すべて調べてから奥へ進む</button>
+    </div>
+  </section>
+
+  <!-- ============ BATTLE ============ -->
+  <section class="screen" id="screen-battle">
+    <div class="topbar">
+      <div><div class="chapter-tag">戦闘</div><div class="screen-title">禁書喰らいが現れた！</div></div>
+      <div></div>
+    </div>
+    <div class="battle-arena">
+      <div class="battle-banner" id="battleBanner"></div>
+      <div class="enemy-wrap" id="enemyWrap">
+        <div class="enemy-figure" id="enemyFigure"><svg class="icon" style="width:84px;height:84px;color:#e0b0c0;"><use href="#i-book"/></svg></div>
+        <div class="enemy-name">禁書喰らい</div>
+        <div class="hpbar-wrap">
+          <div class="hpbar-track"><div class="hpbar-fill" id="enemyHpFill" style="width:100%;"></div></div>
+          <div class="hpbar-label" id="enemyHpLabel">HP 40 / 40</div>
+        </div>
+      </div>
+    </div>
+    <div class="battle-log" id="battleLog"></div>
+    <div class="party-row" id="partyRow"></div>
+    <div class="battle-controls">
+      <div class="battle-toolbar">
+        <button class="toggle-btn" id="btnAuto"><svg class="icon" style="width:14px;height:14px;"><use href="#i-spark"/></svg>AUTO</button>
+        <button class="toggle-btn" id="btnSpeed">再生速度 x1</button>
+      </div>
+      <div class="turn-order-row" id="turnOrderRow"></div>
+      <div class="turn-indicator" id="turnIndicator">アレンのターン</div>
+      <div class="cmd-grid" id="cmdGrid"></div>
+    </div>
+  </section>
+
+  <!-- ============ CASE FILE (tabbed) ============ -->
+  <section class="screen" id="screen-case">
+    <div class="topbar">
+      <div><div class="chapter-tag">事件簿</div><div class="screen-title">消えた肖像画</div></div>
+      <div></div>
+    </div>
+    <div class="case-tabbar" id="caseTabbar">
+      <button class="case-tab active" data-tab="overview">概要</button>
+      <button class="case-tab" data-tab="people">人物</button>
+      <button class="case-tab" data-tab="evidence">証拠</button>
+      <button class="case-tab" data-tab="testimony">証言</button>
+      <button class="case-tab" data-tab="reason">推理</button>
+    </div>
+    <div class="screen-scroll">
+
+      <div class="case-panel active" id="panel-overview">
+        <div class="card">
+          <div class="kv-row"><span class="k">事件名</span><span class="v">消えた肖像画</span></div>
+          <div class="kv-row"><span class="k">発生場所</span><span class="v">王立美術館</span></div>
+          <div class="kv-row"><span class="k">発生日時</span><span class="v">エルディア暦812年 霜月</span></div>
+          <div class="kv-row"><span class="k">現在の目的</span><span class="v" id="ovGoal">証拠を集める</span></div>
+          <div class="kv-row"><span class="k">解決状況</span><span class="v"><span class="status-pill" id="ovStatus">未解決</span></span></div>
+        </div>
+        <div class="section-label">あらすじ</div>
+        <div class="card"><p style="margin:0;">王立美術館に展示されていた王家ゆかりの肖像画から、人物が一人だけ消失した。侵入の形跡はなく、額縁にも破損はない。警備員と学芸員の証言も食い違っている。探偵騎士団は、この不可解な事件の調査に乗り出した。</p></div>
+      </div>
+
+      <div class="case-panel" id="panel-people">
+        <div id="peopleList"></div>
+      </div>
+
+      <div class="case-panel" id="panel-evidence">
+        <div id="evidenceList"></div>
+      </div>
+
+      <div class="case-panel" id="panel-testimony">
+        <div id="testimonyList"></div>
+      </div>
+
+      <div class="case-panel" id="panel-reason">
+        <div class="card">
+          <p style="margin-bottom:14px;color:var(--text-main);font-weight:600;">なぜ肖像画から人物だけが消えたのか？</p>
+          <div id="reasonOptions"></div>
+          <div class="reason-feedback" id="reasonFeedback"></div>
+          <button class="btn btn-gold btn-block" id="btnSolve" style="display:none;">事件を解決する</button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ RESULT ============ -->
+  <section class="screen" id="screen-result">
+    <div class="result-wrap">
+      <div class="result-blackout" id="resultBlackout"></div>
+      <div class="screen-scroll">
+        <div class="result-stamp">
+          <div class="badge"><svg class="icon"><use href="#i-flag"/></svg></div>
+          <h2 class="font-head">事件解決</h2>
+          <p>「消えた肖像画」― リザルト</p>
+        </div>
+        <div class="card" id="resultRewards"></div>
+        <button class="btn btn-primary btn-block reveal-item" style="margin-top:18px;animation-delay:1.6s;" id="btnResultNext">次へ</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SOLVED ============ -->
+  <section class="screen" id="screen-solved">
+    <div class="screen-scroll">
+      <div class="solved-badge"><svg class="icon"><use href="#i-check"/></svg></div>
+      <h2 class="font-head" style="text-align:center;font-size:19px;color:var(--gold-bright);margin-bottom:4px;">事件解決</h2>
+      <p style="text-align:center;">「消えた肖像画」事件 ― 解決</p>
+
+      <div class="card">
+        <p>肖像画から消えていたのは、絵の欠損でも幻覚でもなかった。何者かが<b style="color:var(--moon-silver)">記憶魔法</b>を用い、ある人物の存在そのものを人々の記憶から改竄していたのだ。警備員と学芸員、二人の証言が食い違っていたのも、記憶そのものが書き換えられていたからだった。</p>
+        <p>犯人はまだ影の中にいる。だが遺された魔導具の紋章は、王家の歴史から抹消された、ある名前へとつながっていた ―― <b style="color:var(--gold-bright)">「第十三王」</b>。</p>
+        <p>セレナは静かに呟いた。「王家の記録に存在しない王……調べる価値がありそうね。」その時、美術館の闇の奥で、黒い剣士の影がこちらを見つめていたことに、二人はまだ気づいていない。</p>
+      </div>
+
+      <div class="section-label">次章予告</div>
+      <div class="card teaser-card">
+        <p style="color:var(--moon-silver);font-weight:600;margin-bottom:6px;">第二章「忘れられた回廊」</p>
+        <p style="margin:0;">王城の奥深くに封じられた回廊で、新たな怪異が探偵騎士団を待つ。第十三王の謎は、さらに深い闇へと続いている……</p>
+        <div class="teaser-lock"><svg class="icon" style="width:14px;height:14px;"><use href="#i-door"/></svg>Coming soon</div>
+        <button class="btn btn-ghost btn-block" style="margin-top:12px;" id="btnCh2FromSolved">第二章のプレビューを見る</button>
+      </div>
+
+      <button class="btn btn-primary btn-block" style="margin-top:18px;" id="btnBackHomeFromSolved">ホームに戻る</button>
+    </div>
+  </section>
+
+  <!-- ============ CHARACTERS ============ -->
+  <section class="screen" id="screen-characters">
+    <div class="topbar">
+      <div><div class="chapter-tag">探偵騎士団</div><div class="screen-title">キャラクター育成</div></div>
+      <div></div>
+    </div>
+    <div class="char-select-row" id="charSelectRow"></div>
+    <div class="char-hero-card card" id="charHeroCard"></div>
+    <div class="char-tabbar" id="charTabbar">
+      <button class="char-tab active" data-ctab="stats">ステータス</button>
+      <button class="char-tab" data-ctab="equip">装備</button>
+      <button class="char-tab" data-ctab="skills">スキル</button>
+      <button class="char-tab" data-ctab="lore">秘録</button>
+      <button class="char-tab" data-ctab="bond">絆</button>
+    </div>
+    <div class="screen-scroll with-nav">
+      <div class="char-panel active" id="cpanel-stats"></div>
+      <div class="char-panel" id="cpanel-equip"></div>
+      <div class="char-panel" id="cpanel-skills"></div>
+      <div class="char-panel" id="cpanel-lore"></div>
+      <div class="char-panel" id="cpanel-bond"></div>
+    </div>
+  </section>
+
+  <!-- ============ CHAPTER 2 SKELETON ============ -->
+  <section class="screen" id="screen-ch2-preview">
+    <div class="topbar">
+      <div><div class="chapter-tag">第二章（骨組み）</div><div class="screen-title">忘れられた回廊</div></div>
+      <div></div>
+    </div>
+    <div class="screen-scroll">
+      <div class="card gold-edge">
+        <p style="margin:0;">王城の奥、長らく封じられていた回廊。冷たい空気が漂い、壁には見覚えのない紋章が刻まれている。</p>
+      </div>
+      <div class="explore-stage" id="ch2Stage" style="min-height:260px;margin:14px 0;">
+        <div class="hall-arch a1"></div><div class="hall-arch a2"></div><div class="hall-floorline"></div>
+        <div class="explore-caption">この先は、次回のアップデートで解放される予定です。扉に触れてみよう。</div>
+      </div>
+      <div class="section-label">第二章プレビュー</div>
+      <div class="card">
+        <p style="margin-bottom:10px;">「忘れられた回廊」では、以下の要素が追加される予定です。</p>
+        <ul style="margin:0;padding-left:18px;color:var(--text-sub);font-size:12.5px;line-height:2;">
+          <li>新たな事件「回廊の亡霊」の調査</li>
+          <li>ノア・エルフェンの加入イベント</li>
+          <li>黒衣のアルトとの邂逅</li>
+          <li>第十三王にまつわる新事実</li>
+        </ul>
+      </div>
+      <button class="btn btn-primary btn-block" style="margin-top:18px;" id="btnCh2Back">ホームに戻る</button>
+    </div>
+  </section>
+
+  <!-- ============ BOTTOM NAV (shared) ============ -->
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="nav-btn" data-target="home"><svg class="icon"><use href="#i-moon"/></svg>ホーム</button>
+    <button class="nav-btn" data-target="map"><svg class="icon"><use href="#i-map"/></svg>冒険</button>
+    <button class="nav-btn" data-target="case"><svg class="icon"><use href="#i-scroll"/></svg>事件簿</button>
+    <button class="nav-btn" data-target="characters"><svg class="icon"><use href="#i-user"/></svg>仲間</button>
+    <button class="nav-btn" data-target="settings"><svg class="icon"><use href="#i-gear"/></svg>メニュー</button>
+  </nav>
+
+</div>
+
+<!-- ============ MODAL ============ -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-sheet" id="modalSheet"></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   DATA
+   ============================================================ */
+const STORAGE_KEY = "tsukikage_detective_knights_save_v2";
+
+function freshState(){
+  return {
+    playerName: "",
+    stage: "not_started", // not_started -> story_intro -> exploring -> battle_pending -> battle_won -> case_file -> result -> solved
+    hotspots: {},
+    evidence: [],
+    reasonCorrect: false,
+    reasonAttempts: 0,
+    rewardsGranted: false,
+    gold: 0,
+    inventory: ["moon_pendant","silver_ring","gold_brooch"],
+    bonds: { serena:0, noah:0, lucia:0 },
+    chapter2Stage: "not_started",
+    settings: { bgm:true, se:true, reducedMotion:false },
+    chars: {
+      hero:   { key:"hero",   name:"", role:"探偵騎士", weapon:"剣", magic:null, icon:"i-sword", equipped:null,
+                level:1, exp:0, expNext:20, hp:32, maxHp:32, mp:12, maxMp:12, atk:9, def:6, unlocked:true,
+                bio:"月影都市に生まれた若き探偵騎士。剣の腕は団随一。まだ名も浅いが、真実を見抜く目を持つ。" },
+      serena: { key:"serena", name:"セレナ・ヴァイス", role:"副隊長", weapon:"細剣", magic:"光魔法", icon:"i-rapier", equipped:null,
+                level:1, exp:0, expNext:20, hp:28, maxHp:28, mp:20, maxMp:20, atk:7, def:7, unlocked:true,
+                bio:"理知的で冷静な副隊長。光魔法と細剣を操り、感情より論理を重んじる。" },
+      noah:   { key:"noah", name:"ノア・エルフェン", role:"魔導士", weapon:"魔導書", magic:"闇魔法", icon:"i-book",
+                level:1, unlocked:false,
+                bio:"古代魔法に精通した謎多き魔導士。第十三王の記録にも通じているという噂がある。" },
+      lucia:  { key:"lucia", name:"リュシア", role:"神官", weapon:"杖", magic:"水・光魔法", icon:"i-staff",
+                level:1, unlocked:false,
+                bio:"回復と支援を得意とする心優しき神官。まだ探偵騎士団には加わっていない。" }
+    }
+  };
+}
+
+let state = load();
+
+function load(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return freshState();
+    const parsed = JSON.parse(raw);
+    const base = freshState();
+    return Object.assign(base, parsed, {
+      chars: Object.assign(base.chars, parsed.chars||{}),
+      settings: Object.assign(base.settings, parsed.settings||{}),
+      bonds: Object.assign(base.bonds, parsed.bonds||{})
+    });
+  }catch(e){ return freshState(); }
+}
+function save(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+  // クラウド保存（任意）：firebase-init.js が読み込まれている場合のみ、控えめに同期を試みる
+  if(window.TsukikageCloud && typeof window.TsukikageCloud.save==="function"){
+    try{ window.TsukikageCloud.save(state); }catch(e){ /* オフライン等は無視 */ }
+  }
+}
+
+const HOTSPOTS = [
+  { id:"portrait", type:"clue", top:"18%", left:"50%", icon:"i-frame", title:"王家の肖像画",
+    desc:"描かれているはずの人物の輪郭だけが、わずかに歪んでいる。目を凝らすと、微かな魔力の残滓が漂っているのが分かる。",
+    evidenceTitle:"肖像画に残る魔力の残滓", evidenceDesc:"消えた人物の輪郭の周囲に、微弱な魔力の残滓が漂っている。記憶に干渉する類の魔法特有の反応だ。", important:true },
+  { id:"footprints", type:"clue", top:"40%", left:"18%", icon:"i-footprint", title:"床の足跡",
+    desc:"争った形跡はどこにもない。ただ一人分の静かな足跡が、肖像画の真正面でふっつりと途切れている。",
+    evidenceTitle:"肖像画前で途切れる足跡", evidenceDesc:"争った痕跡は一切なし。静かな一人分の足跡が、肖像画の正面で忽然と途絶えている。", important:false },
+  { id:"archive", type:"clue", top:"40%", left:"82%", icon:"i-scroll", title:"展示資料",
+    desc:"王家系譜の記録を確認すると、「第十三王」という記述の断片が見つかる。だがその前後は判読できないほど傷んでいる。",
+    evidenceTitle:"王家系譜にある「第十三王」の記述", evidenceDesc:"王家系譜の古い記録に、聞いたことのない「第十三王」という記述の断片を発見。前後の文脈は判読不能。", important:true },
+  { id:"corridor", type:"clue", top:"64%", left:"30%", icon:"i-door", title:"関係者用通路",
+    desc:"普段は使われていない通路の隅に、古い魔導具の欠片が落ちている。表面には記憶魔法特有の紋章が刻まれていた。",
+    evidenceTitle:"記憶魔法の紋章が刻まれた魔導具の欠片", evidenceDesc:"通路の隅に落ちていた古い魔導具の欠片。表面には記憶魔法特有の紋章が刻まれている。", important:true },
+  { id:"guard", type:"testimony", top:"64%", left:"70%", icon:"i-user", title:"警備員ダロンへの聞き込み",
+    desc:"「確かに肖像画を見た。目を離した隙などなかった」――警備員ダロンは断言する。彼の証言に嘘は感じられない。",
+    evidenceTitle:"警備員ダロンの証言", evidenceDesc:"「確かに肖像画を見た。目を離した隙などなかった」。実直な性格で、嘘をついている様子はない。", important:false },
+  { id:"curator", type:"testimony", top:"84%", left:"50%", icon:"i-user", title:"学芸員フィオナへの聞き込み",
+    desc:"「あの壁には、最初から何も飾られていなかったはずよ」――学芸員フィオナは怪訝な顔で言う。展示記録と食い違っている。",
+    evidenceTitle:"学芸員フィオナの証言", evidenceDesc:"「あの壁には、最初から何も飾られていなかったはずよ」。展示記録の管理者でありながら、記憶が食い違っている。", important:false }
+];
+
+const PERSONS = [
+  { id:"guard", name:"警備員ダロン", role:"目撃者", icon:"i-user", requiresHotspot:"guard",
+    note:"美術館の夜間警備を担当。実直な性格で、証言に嘘は感じられない。" },
+  { id:"curator", name:"学芸員フィオナ", role:"目撃者", icon:"i-user", requiresHotspot:"curator",
+    note:"美術館の学芸員。展示記録を管理しているが、記憶が食い違っている。" },
+  { id:"serena_p", name:"セレナ・ヴァイス", role:"主人公側・副隊長", icon:"i-rapier", requiresHotspot:null,
+    note:"理論派の副隊長。証拠を冷静に分析し、事件の全体像を組み立てていく。" },
+  { id:"unknown", name:"？？？", role:"重要参考人", icon:"i-mask", requiresHotspot:null,
+    note:"「第十三王」という記述に関わる人物と思われるが、詳細は不明。調査を進めることで明らかになるかもしれない。" }
+];
+
+const REASON_OPTIONS = [
+  { key:"A", text:"誰かが絵を物理的に破壊した" },
+  { key:"B", text:"幻覚魔法によって人物が見えなくなっただけだ" },
+  { key:"C", text:"記憶魔法によって、人物の存在そのものが改竄された" },
+  { key:"D", text:"もともと、その人物は描かれていなかった" }
+];
+const REASON_CORRECT = "C";
+
+const STORY_INTRO = [
+  { who:"serena", name:"セレナ・ヴァイス", text:"王家の肖像画から、人物が一人だけ消えたそうよ。しかも――誰もその人物を覚えていないと言うの。" },
+  { who:"hero", name:null, text:"記憶ごと消えた……ということか。" },
+  { who:"serena", name:"セレナ・ヴァイス", text:"ええ。あり得ない話だけど、あり得ないことが起きるのがこの月影都市よ。まずは現場、王立美術館を調べましょう。" },
+  { who:"system", name:null, text:"探偵騎士団の紋章を掲げ、二人は王立美術館へと向かった。" }
+];
+const STORY_PREBATTLE = [
+  { who:"system", name:null, text:"証拠と証言はすべて集まった。だがその時――展示室の闇が、静かに蠢いた。" },
+  { who:"serena", name:"セレナ・ヴァイス", text:"気をつけて。本の気配……禁書喰らいだわ！" }
+];
+const STORY_POSTBATTLE = [
+  { who:"serena", name:"セレナ・ヴァイス", text:"はぁ……はぁ……。この化け物が展示室にいたということは、やはりここに何か秘密が隠されているようね。" },
+  { who:"hero", name:null, text:"集めた証拠と証言を、事件簿にまとめよう。" }
+];
+const STORY_CH2_INTRO = [
+  { who:"serena", name:"セレナ・ヴァイス", text:"王城の奥、長らく封じられていた回廊が、何かの拍子に開いたそうよ。「忘れられた回廊」と呼ばれている場所……" },
+  { who:"hero", name:null, text:"第十三王の手がかりが、そこにあるかもしれないな。" },
+  { who:"system", name:null, text:"探偵騎士団は、新たな謎へと足を踏み入れる。――この先の物語は、次回のアップデートで語られる。" }
+];
+
+const ACCESSORIES = [
+  { id:"moon_pendant", name:"月光のペンダント", icon:"i-moon", desc:"月明かりを宿した銀のペンダント。攻撃力がわずかに上昇する。", bonus:{atk:2, def:0} },
+  { id:"silver_ring", name:"銀の指輪", icon:"i-shield", desc:"探偵騎士団の紋章が刻まれた指輪。防御力がわずかに上昇する。", bonus:{atk:0, def:2} },
+  { id:"gold_brooch", name:"金のブローチ", icon:"i-star", desc:"団長より賜った誉れのブローチ。攻撃力・防御力がともにわずかに上昇する。", bonus:{atk:1, def:1} }
+];
+
+const SKILLS = {
+  hero:   [ { name:"渾身の一撃", icon:"i-sword", cost:4, unlockLv:1, desc:"MPを消費し、通常攻撃よりも大きなダメージを与える剣技。" } ],
+  serena: [ { name:"迅速の突き", icon:"i-rapier", cost:3, unlockLv:1, desc:"MPを消費し、素早く突きを繰り出す剣技。" },
+            { name:"光の癒し", icon:"i-spark", cost:6, unlockLv:1, desc:"MPを消費し、味方1人のHPを回復する光魔法。" } ],
+  noah:   [ { name:"（未加入）", icon:"i-book", cost:null, unlockLv:null, desc:"仲間になるとスキルが解放される。" } ],
+  lucia:  [ { name:"（未加入）", icon:"i-staff", cost:null, unlockLv:null, desc:"仲間になるとスキルが解放される。" } ]
+};
+
+const LORE = {
+  hero: [
+    { title:"入団の記録", cond:"always", text:"月影都市生まれ。剣術道場で頭角を現し、若くして探偵騎士団に抜擢された。" },
+    { title:"消えた肖像画事件・後日談", cond:"ch1_solved", text:"事件を解決した夜、彼は一人静かに月を見上げていた。「第十三王」という言葉が、なぜか懐かしく感じられた。" }
+  ],
+  serena: [
+    { title:"ヴァイス家の記録", cond:"always", text:"代々王家の記録を守ってきたヴァイス家の令嬢。感情より論理を重んじる性分は、幼少期の経験に由来するという。" },
+    { title:"副隊長の独白", cond:"ch1_solved", text:"「第十三王、か……。王家の記録を守る家に生まれた私が、その名を知らなかったなんて」" }
+  ],
+  noah: [ { title:"？？？", cond:"never", text:"まだ多くは知られていない。仲間になれば、秘められた記録が明らかになるだろう。" } ],
+  lucia: [ { title:"？？？", cond:"never", text:"まだ多くは知られていない。仲間になれば、秘められた記録が明らかになるだろう。" } ]
+};
+
+const BOND_LEVELS = [
+  { min:0,  label:"出会ったばかり", flavor:"まだお互いをよく知らない段階。" },
+  { min:10, label:"信頼を深めつつある", flavor:"共に調査を重ねる中で、少しずつ距離が縮まっている。" },
+  { min:20, label:"固い絆", flavor:"言葉を交わさずとも、動きだけで意図が伝わるようになった。" },
+  { min:30, label:"唯一無二の相棒", flavor:"探偵騎士団の中でも、ひときわ強い信頼で結ばれている。" }
+];
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function heroName(){ return state.playerName || "アレン"; }
+function $(sel, root){ return (root||document).querySelector(sel); }
+function $all(sel, root){ return Array.from((root||document).querySelectorAll(sel)); }
+function iconSvg(id, size){ return '<svg class="icon" style="width:'+(size||22)+'px;height:'+(size||22)+'px;"><use href="#'+id+'"/></svg>'; }
+function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+function rnd(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+
+function equippedItem(key){
+  const c = state.chars[key];
+  if(!c || !c.equipped) return null;
+  return ACCESSORIES.find(a=>a.id===c.equipped) || null;
+}
+function getAtk(key){ const c=state.chars[key]; const item=equippedItem(key); return c.atk + (item?item.bonus.atk:0); }
+function getDef(key){ const c=state.chars[key]; const item=equippedItem(key); return c.def + (item?item.bonus.def:0); }
+function cardHost(key){ const idx = ["hero","serena"].indexOf(key); return $all(".party-card")[idx]; }
+function bondLevelInfo(value){
+  let cur = BOND_LEVELS[0];
+  for(const lv of BOND_LEVELS){ if(value>=lv.min) cur=lv; }
+  return cur;
+}
+function loreCondMet(cond){
+  if(cond==="always") return true;
+  if(cond==="never") return false;
+  if(cond==="ch1_solved") return state.stage==="solved" || state.stage==="result";
+  return false;
+}
+function ch2Unlocked(){ return state.stage==="solved"; }
+
+const NAV_SCREENS = ["home","map","case","characters","settings"];
+function goto(screenId){
+  $all(".screen").forEach(s=>s.classList.remove("active"));
+  $("#"+screenId).classList.add("active");
+  const shortId = screenId.replace("screen-","");
+  const appShell = $("#appShell");
+  if(NAV_SCREENS.includes(shortId)){
+    appShell.classList.add("show-nav");
+    $all(".nav-btn").forEach(b=>b.classList.toggle("active", b.getAttribute("data-target")===shortId));
+  } else {
+    appShell.classList.remove("show-nav");
+  }
+  window.scrollTo(0,0);
+}
+
+function openModal(html){ $("#modalSheet").innerHTML = html; $("#modalOverlay").classList.add("active"); }
+function closeModal(){ $("#modalOverlay").classList.remove("active"); }
+$("#modalOverlay").addEventListener("click", (e)=>{ if(e.target.id==="modalOverlay") closeModal(); });
+
+function applySettings(){
+  document.body.classList.toggle("reduced-motion", !!state.settings.reducedMotion);
+}
+
+/* ============================================================
+   NAV
+   ============================================================ */
+$all(".nav-btn").forEach(btn=>{
+  btn.addEventListener("click", ()=> navGo(btn.getAttribute("data-target")));
+});
+function navGo(target){
+  if(target==="home"){ renderHome(); goto("screen-home"); }
+  else if(target==="map"){ renderMap(); goto("screen-map"); }
+  else if(target==="characters"){ renderCharacters(); goto("screen-characters"); }
+  else if(target==="settings"){ renderSettings(); goto("screen-settings"); }
+  else if(target==="case"){
+    if(state.stage==="not_started" || state.stage==="story_intro"){
+      openModal(
+        '<div class="modal-icon-row"><div class="icon-badge">'+iconSvg("i-scroll",20)+'</div><div><div class="modal-tag">事件簿</div><div class="modal-title">まだ調査記録がありません</div></div></div>'+
+        '<p>事件を受注し、現場を調査すると、ここに記録が追加されます。</p>'+
+        '<button class="btn btn-primary btn-block" id="mClose">閉じる</button>'
+      );
+      $("#mClose").addEventListener("click", closeModal);
+      return;
+    }
+    renderCase(); goto("screen-case");
+  }
+}
+
+/* ============================================================
+   HOME
+   ============================================================ */
+function renderHome(){
+  $("#hpName").textContent = heroName();
+  $("#hpLevel").textContent = "Lv."+state.chars.hero.level+" 探偵騎士";
+  $("#hpGold").textContent = state.gold;
+  $("#btnStartLabel").textContent = state.stage==="not_started" ? "冒険を始める" : "冒険を続ける";
+
+  const labelMap = {
+    not_started:"まだ事件を受注していません。冒険マップから受注しよう。",
+    story_intro:"セレナとの会話が途中です。",
+    exploring:"美術館の調査中です。",
+    battle_pending:"禁書喰らいとの戦闘が控えています。",
+    battle_won:"戦闘に勝利しました。事件簿を確認しましょう。",
+    case_file:"証拠は揃っています。推理を進めましょう。",
+    result:"事件の結末を確認しましょう。",
+    solved:"第一章「消えた肖像画」クリア済み"
+  };
+  $("#progressNote").textContent = labelMap[state.stage] || "";
+}
+$("#btnStart").addEventListener("click", ()=>{
+  if(!state.playerName){ promptName(()=> routeToStage()); }
+  else routeToStage();
+});
+$("#btnBell").addEventListener("click", ()=>{
+  const msg = state.stage==="not_started"
+    ? "新しい依頼：「消えた肖像画」が受注可能です。冒険マップから向かいましょう。"
+    : "現在のところ、新しい通知はありません。";
+  openModal(
+    '<div class="modal-icon-row"><div class="icon-badge">'+iconSvg("i-bell",20)+'</div><div><div class="modal-tag">通知</div><div class="modal-title">お知らせ</div></div></div>'+
+    '<p>'+msg+'</p><button class="btn btn-primary btn-block" id="mClose">閉じる</button>'
+  );
+  $("#mClose").addEventListener("click", closeModal);
+});
+$("#btnGear").addEventListener("click", ()=>{ renderSettings(); goto("screen-settings"); });
+
+function promptName(onDone){
+  openModal(
+    '<div class="modal-icon-row"><div class="icon-badge">'+iconSvg("i-user",20)+'</div><div><div class="modal-tag">入団登録</div><div class="modal-title">探偵騎士団への入団</div></div></div>'+
+    '<p>探偵騎士としての名を刻んでください。</p>'+
+    '<input type="text" id="nameInputModal" maxlength="10" placeholder="例：アレン" style="width:100%;background:var(--bg-panel);border:1px solid var(--line-hair);border-radius:10px;padding:12px 14px;color:var(--text-main);font-size:15px;font-family:var(--font-body);margin-bottom:14px;">'+
+    '<button class="btn btn-gold btn-block" id="mConfirmName">入団する</button>'
+  );
+  $("#nameInputModal").focus();
+  $("#mConfirmName").addEventListener("click", ()=>{
+    const v = $("#nameInputModal").value.trim();
+    state.playerName = v.length>0 ? v : "アレン";
+    state.chars.hero.name = state.playerName;
+    save();
+    closeModal();
+    renderHome();
+    if(onDone) onDone();
+  });
+}
+
+function routeToStage(){
+  renderMap();
+  switch(state.stage){
+    case "not_started": goto("screen-map"); break;
+    case "story_intro": startStory("intro"); goto("screen-story"); break;
+    case "exploring": renderExplore(); goto("screen-explore"); break;
+    case "battle_pending": initBattle(); goto("screen-battle"); break;
+    case "battle_won": renderCase(); goto("screen-case"); break;
+    case "case_file": renderCase(); goto("screen-case"); break;
+    case "result": renderResult(); goto("screen-result"); break;
+    case "solved": renderSolved(); goto("screen-solved"); break;
+    default: goto("screen-map");
+  }
+}
+
+/* ============================================================
+   SETTINGS
+   ============================================================ */
+function renderSettings(){
+  $("#swBgm").classList.toggle("on", state.settings.bgm);
+  $("#swSe").classList.toggle("on", state.settings.se);
+  $("#swMotion").classList.toggle("on", state.settings.reducedMotion);
+  const cloudAvailable = !!(window.TsukikageCloud && typeof window.TsukikageCloud.save==="function");
+  $("#cloudStatusText").textContent = cloudAvailable
+    ? "クラウド保存が利用できます。有効にすると、他の端末からも同じ進行状況で再開できます。"
+    : "この機能は現在このページでは未設定です（開発者向け：README.mdのクラウド保存の章を参照）。";
+}
+$("#swBgm").addEventListener("click", ()=>{ state.settings.bgm = !state.settings.bgm; save(); renderSettings(); });
+$("#swSe").addEventListener("click", ()=>{ state.settings.se = !state.settings.se; save(); renderSettings(); });
+$("#swMotion").addEventListener("click", ()=>{ state.settings.reducedMotion = !state.settings.reducedMotion; save(); applySettings(); renderSettings(); });
+$("#btnCloudSave").addEventListener("click", async ()=>{
+  if(!(window.TsukikageCloud && typeof window.TsukikageCloud.save==="function")){
+    openModal(
+      '<div class="modal-icon-row"><div class="icon-badge">'+iconSvg("i-mask",20)+'</div><div><div class="modal-tag">クラウド保存</div><div class="modal-title">未設定です</div></div></div>'+
+      '<p>この機能を使うには、開発者がfirebase-init.jsを設定する必要があります。詳しくはREADME.mdをご覧ください。</p>'+
+      '<button class="btn btn-primary btn-block" id="mClose">閉じる</button>'
+    );
+    $("#mClose").addEventListener("click", closeModal);
+    return;
+  }
+  try{
+    await window.TsukikageCloud.save(state);
+    openModal('<p style="margin:0;">クラウドに保存しました。</p><button class="btn btn-primary btn-block" style="margin-top:10px;" id="mClose">閉じる</button>');
+    $("#mClose").addEventListener("click", closeModal);
+  }catch(e){
+    openModal('<p style="margin:0;">クラウド保存に失敗しました。通信環境をご確認ください。</p><button class="btn btn-primary btn-block" style="margin-top:10px;" id="mClose">閉じる</button>');
+    $("#mClose").addEventListener("click", closeModal);
+  }
+});
+$("#btnCloudLoad").addEventListener("click", async ()=>{
+  if(!(window.TsukikageCloud && typeof window.TsukikageCloud.load==="function")){
+    openModal(
+      '<div class="modal-icon-row"><div class="icon-badge">'+iconSvg("i-mask",20)+'</div><div><div class="modal-tag">クラウド保存</div><div class="modal-title">未設定です</div></div></div>'+
+      '<p>この機能を使うには、開発者がfirebase-init.jsを設定する必要があります。詳しくはREADME.mdをご覧ください。</p>'+
+      '<button class="btn btn-primary btn-block" id="mClose">閉じる</button>'
+    );
+    $("#mClose").addEventListener("click", closeModal);
+    return;
+  }
+  try{
+    const remote = await window.TsukikageCloud.load();
+    if(!remote){
+      openModal('<p style="margin:0;">クラウドにセーブデータが見つかりませんでした。</p><button class="btn btn-primary btn-block" style="margin-top:10px;" id="mClose">閉じる</button>');
+      $("#mClose").addEventListener("click", closeModal);
+      return;
+    }
+    const base = freshState();
+    state = Object.assign(base, remote, {
+      chars: Object.assign(base.chars, remote.chars||{}),
+      settings: Object.assign(base.settings, remote.settings||{}),
+      bonds: Object.assign(base.bonds, remote.bonds||{})
+    });
+    save();
+    applySettings();
+    openModal('<p style="margin:0;">クラウドのデータを復元しました。</p><button class="btn btn-primary btn-block" style="margin-top:10px;" id="mClose">閉じる</button>');
+    $("#mClose").addEventListener("click", ()=>{ closeModal(); renderHome(); goto("screen-home"); });
+  }catch(e){
+    openModal('<p style="margin:0;">クラウドからの復元に失敗しました。通信環境をご確認ください。</p><button class="btn btn-primary btn-block" style="margin-top:10px;" id="mClose">閉じる</button>');
+    $("#mClose").addEventListener("click", closeModal);
+  }
+});
+$("#btnResetSettings").addEventListener("click", ()=>{
+  openModal(
+    '<div class="modal-icon-row"><div class="icon-badge">'+iconSvg("i-search",20)+'</div><div><div class="modal-tag">確認</div><div class="modal-title">セーブデータを削除しますか？</div></div></div>'+
+    '<p>進行状況・証拠・育成データがすべて消去されます。</p>'+
+    '<div style="display:flex;gap:10px;margin-top:6px;">'+
+      '<button class="btn btn-ghost btn-block" id="mCancel">キャンセル</button>'+
+      '<button class="btn btn-gold btn-block" id="mConfirm">削除する</button>'+
+    '</div>'
+  );
+  $("#mCancel").addEventListener("click", closeModal);
+  $("#mConfirm").addEventListener("click", ()=>{
+    localStorage.removeItem(STORAGE_KEY);
+    state = freshState();
+    applySettings();
+    closeModal();
+    renderHome(); goto("screen-home");
+  });
+});
+
+/* ============================================================
+   MAP
+   ============================================================ */
+function renderMap(){
+  const statusMap = {
+    not_started:"事件受注可能", story_intro:"調査準備中", exploring:"調査中",
+    battle_pending:"異変あり", battle_won:"手がかりあり", case_file:"推理待ち", result:"解決演出中", solved:"解決済み"
+  };
+  $("#museumStatus").textContent = statusMap[state.stage] || "事件受注可能";
+  const ch2Node = $("#mapNodeCh2");
+  const unlocked = ch2Unlocked();
+  ch2Node.classList.toggle("locked", !unlocked);
+  $("#ch2Status").textContent = unlocked ? "挑戦可能" : "第一章クリアで解放";
+}
+$("#mapNodeMuseum").addEventListener("click", ()=>{
+  if(state.stage==="not_started"){
+    if(!state.playerName){ promptName(()=>{ state.stage="story_intro"; save(); routeToStage(); }); return; }
+    state.stage="story_intro"; save();
+  }
+  routeToStage();
+});
+$("#mapNodeCh2").addEventListener("click", ()=>{ if(ch2Unlocked()) ch2Start(); });
+
+/* ============================================================
+   CHAPTER 2 SKELETON
+   ============================================================ */
+function renderCh2Stage(){
+  const stage = $("#ch2Stage");
+  $all(".hotspot", stage).forEach(e=>e.remove());
+  const el = document.createElement("div");
+  el.className = "hotspot";
+  el.style.top = "50%"; el.style.left = "50%";
+  el.innerHTML = iconSvg("i-door", 22);
+  el.addEventListener("click", ()=>{
+    openModal(
+      '<div class="modal-icon-row"><div class="icon-badge">'+iconSvg("i-door",20)+'</div><div><div class="modal-tag">謎の扉</div><div class="modal-title">開かない扉</div></div></div>'+
+      '<p>扉には見覚えのない紋章が刻まれている。押しても引いても動かない。この先は現在制作中です。次回のアップデートをお楽しみに。</p>'+
+      '<button class="btn btn-primary btn-block" id="mClose">閉じる</button>'
+    );
+    $("#mClose").addEventListener("click", closeModal);
+  });
+  stage.appendChild(el);
+}
+function ch2Start(){
+  if(!state.chapter2Stage || state.chapter2Stage==="not_started"){
+    startStory("ch2intro");
+    goto("screen-story");
+  } else {
+    renderCh2Stage(); goto("screen-ch2-preview");
+  }
+}
+$("#btnCh2Back").addEventListener("click", ()=>{ renderHome(); goto("screen-home"); });
+$("#btnCh2FromSolved").addEventListener("click", ()=>{ ch2Start(); });
+
+/* ============================================================
+   STORY / DIALOGUE
+   ============================================================ */
+let storyLines = [];
+let storyIdx = 0;
+let storyOnEnd = null;
+
+function startStory(mode){
+  if(mode==="intro"){ storyLines = STORY_INTRO; storyOnEnd = ()=>{ state.stage="exploring"; state.bonds.serena=clamp((state.bonds.serena||0)+5,0,99); save(); renderExplore(); goto("screen-explore"); }; $("#storyHeader").textContent="王都・大通り"; }
+  if(mode==="prebattle"){ storyLines = STORY_PREBATTLE; storyOnEnd = ()=>{ state.stage="battle_pending"; save(); initBattle(); goto("screen-battle"); }; $("#storyHeader").textContent="肖像画の間"; }
+  if(mode==="postbattle"){ storyLines = STORY_POSTBATTLE; storyOnEnd = ()=>{ state.stage="case_file"; save(); renderCase(); goto("screen-case"); }; $("#storyHeader").textContent="肖像画の間"; }
+  if(mode==="ch2intro"){ storyLines = STORY_CH2_INTRO; storyOnEnd = ()=>{ state.chapter2Stage="previewed"; save(); renderCh2Stage(); goto("screen-ch2-preview"); }; $("#storyHeader").textContent="王城・忘れられた回廊"; }
+  storyIdx = 0;
+  renderStoryLine();
+}
+function renderStoryLine(){
+  const line = storyLines[storyIdx];
+  const isLast = storyIdx === storyLines.length-1;
+  const speakerLabel = line.who==="hero" ? heroName() : (line.who==="serena" ? line.name : "");
+  $("#speakerName").style.display = line.who==="system" ? "none" : "flex";
+  $("#speakerName").innerHTML = (line.who==="hero"?iconSvg("i-sword",16):line.who==="serena"?iconSvg("i-rapier",16):"") + " " + speakerLabel;
+  $("#dialogueText").textContent = line.text;
+  $("#dialogueNext").innerHTML = isLast ? "先へ進む "+iconSvg("i-arrow",14) : "つづける "+iconSvg("i-arrow",14);
+  const portrait = $("#storyPortrait");
+  if(line.who==="hero"){ portrait.innerHTML = iconSvg("i-sword",44); portrait.style.background="linear-gradient(135deg, rgba(91,141,239,0.25), rgba(91,141,239,0.05))"; portrait.style.color="#bcd0ff"; }
+  else if(line.who==="serena"){ portrait.innerHTML = iconSvg("i-rapier",44); portrait.style.background="linear-gradient(135deg, rgba(138,107,216,0.28), rgba(138,107,216,0.06))"; portrait.style.color="#d8c8ff"; }
+  else { portrait.innerHTML = iconSvg("i-moon",44); portrait.style.background="linear-gradient(135deg, rgba(217,181,106,0.22), rgba(217,181,106,0.04))"; portrait.style.color="var(--gold-bright)"; }
+}
+$("#dialogueBox").addEventListener("click", ()=>{
+  if(storyIdx < storyLines.length-1){ storyIdx++; renderStoryLine(); }
+  else { if(storyOnEnd) storyOnEnd(); }
+});
+$("#btnSkip").addEventListener("click", (e)=>{ e.stopPropagation(); if(storyOnEnd) storyOnEnd(); });
+
+/* ============================================================
+   EXPLORE
+   ============================================================ */
+function renderExplore(){
+  const stage = $("#exploreStage");
+  $all(".hotspot", stage).forEach(el=>el.remove());
+  HOTSPOTS.forEach(h=>{
+    const done = !!state.hotspots[h.id];
+    const el = document.createElement("div");
+    el.className = "hotspot" + (h.type==="testimony"?" testimony":"") + (done ? " done" : "");
+    el.style.top = h.top; el.style.left = h.left;
+    el.innerHTML = iconSvg(h.icon, 22);
+    el.addEventListener("click", ()=> openHotspot(h));
+    stage.appendChild(el);
+  });
+  const count = HOTSPOTS.filter(h=>state.hotspots[h.id]).length;
+  $("#exploreCount").textContent = count+" / "+HOTSPOTS.length;
+  const btn = $("#btnExploreNext");
+  btn.disabled = count < HOTSPOTS.length;
+  btn.textContent = count < HOTSPOTS.length ? "すべて調べてから奥へ進む" : "手がかりは揃った。先へ進む";
+}
+function openHotspot(h){
+  const already = !!state.hotspots[h.id];
+  openModal(
+    '<div class="modal-icon-row"><div class="icon-badge">'+iconSvg(h.icon,20)+'</div><div><div class="modal-tag">'+(h.type==="testimony"?"聞き込み":"調査")+'</div><div class="modal-title">'+h.title+'</div></div></div>'+
+    '<p>'+h.desc+'</p>'+
+    (already ? '<p class="small">（この場所はすでに調べた）</p>' : '')+
+    '<button class="btn btn-primary btn-block" id="mClose">'+(already?'閉じる':'事件簿に記録する')+'</button>'
+  );
+  $("#mClose").addEventListener("click", ()=>{
+    if(!already){
+      state.hotspots[h.id] = true;
+      if(!state.evidence.includes(h.id)) state.evidence.push(h.id);
+      save();
+      renderExplore();
+    }
+    closeModal();
+  });
+}
+$("#btnExploreNext").addEventListener("click", ()=>{
+  if($("#btnExploreNext").disabled) return;
+  startStory("prebattle");
+  goto("screen-story");
+});
+$("#btnOpenCaseFromExplore").addEventListener("click", ()=>{ renderCase(); goto("screen-case"); });
+$("#btnBackToMapFromExplore").addEventListener("click", ()=>{ renderMap(); goto("screen-map"); });
+
+/* ============================================================
+   BATTLE
+   ============================================================ */
+let battle = null;
+function makeBattle(){
+  return {
+    enemy: { name:"禁書喰らい", hp:40, maxHp:40, atkMin:6, atkMax:9, def:3 },
+    order: ["hero","serena"], idx:0,
+    defending: { hero:false, serena:false },
+    round:1, log:["禁書喰らいが展示室の闇から姿を現した！"],
+    auto:false, speed:1, finished:false, autoTimer:null
+  };
+}
+function initBattle(){
+  state.chars.hero.hp = state.chars.hero.maxHp; state.chars.hero.mp = state.chars.hero.maxMp;
+  state.chars.serena.hp = state.chars.serena.maxHp; state.chars.serena.mp = state.chars.serena.maxMp;
+  save();
+  battle = makeBattle();
+  renderBattle();
+  setTimeout(()=> showBattleBanner("禁書喰らいが現れた！"), 150);
+}
+function logMsg(msg){ battle.log.push(msg); if(battle.log.length>40) battle.log.shift(); }
+function currentActorKey(){ return battle.order[battle.idx]; }
+function aliveKeys(){ return ["hero","serena"].filter(k=>state.chars[k].hp>0); }
+
+function showBattleBanner(text, cls){
+  const b = $("#battleBanner");
+  if(!b) return;
+  b.className = "battle-banner show" + (cls?" "+cls:"");
+  b.innerHTML = '<div class="banner-text">'+text+'</div>';
+  setTimeout(()=>{ b.classList.remove("show"); }, 1200);
+}
+function popDamage(target, text, isHeal){
+  const host = target==="enemy" ? $("#enemyWrap") : cardHost(target);
+  if(!host) return;
+  const span = document.createElement("div");
+  span.className = "dmg-pop" + (isHeal?" heal":"");
+  span.textContent = text;
+  host.appendChild(span);
+  setTimeout(()=>{ span.remove(); }, 850);
+}
+function playSlash(){
+  const host = $("#enemyWrap");
+  if(!host) return;
+  const fx = document.createElement("div");
+  fx.className = "slash-fx";
+  fx.innerHTML = '<svg viewBox="0 0 110 110"><line class="sline" x1="10" y1="95" x2="100" y2="15"/></svg>';
+  host.appendChild(fx);
+  setTimeout(()=>fx.remove(), 420);
+}
+function playSparkle(targetKey){
+  const host = cardHost(targetKey);
+  if(!host) return;
+  const fx = document.createElement("div");
+  fx.className = "sparkle-fx";
+  for(let i=0;i<7;i++){
+    const dot = document.createElement("div");
+    dot.className = "sparkle-dot";
+    const angle = Math.random()*Math.PI*2;
+    const dist = 22+Math.random()*16;
+    dot.style.setProperty("--dx", Math.cos(angle)*dist+"px");
+    dot.style.setProperty("--dy", Math.sin(angle)*dist+"px");
+    dot.style.animationDelay = (Math.random()*0.1)+"s";
+    fx.appendChild(dot);
+  }
+  host.appendChild(fx);
+  setTimeout(()=>fx.remove(), 780);
+}
+function lungeCard(key){ const card = cardHost(key); if(!card) return; card.classList.remove("lunge"); void card.offsetWidth; card.classList.add("lunge"); }
+function hitFlashCard(key){ const card = cardHost(key); if(!card) return; card.classList.remove("hit-flash"); void card.offsetWidth; card.classList.add("hit-flash"); }
+function enemyAttackAnim(){ const fig = $("#enemyFigure"); if(!fig) return; fig.classList.remove("enemy-attack"); void fig.offsetWidth; fig.classList.add("enemy-attack"); }
+
+function renderTurnOrder(){
+  const el = $("#turnOrderRow");
+  if(!el) return;
+  let html = battle.order.map((key,i)=>{
+    const c = state.chars[key];
+    const cur = (!battle.finished && i===battle.idx && c.hp>0) ? " current" : "";
+    return '<div class="to-chip'+cur+'">'+iconSvg(c.icon,12)+'</div>';
+  }).join("");
+  html += '<span class="to-sep">→</span><div class="to-chip">'+iconSvg("i-book",12)+'</div>';
+  el.innerHTML = html;
+}
+
+function renderBattle(){
+  const e = battle.enemy;
+  $("#enemyHpFill").style.width = clamp(e.hp/e.maxHp*100,0,100)+"%";
+  $("#enemyHpLabel").textContent = "HP "+Math.max(0,e.hp)+" / "+e.maxHp;
+
+  const logEl = $("#battleLog");
+  logEl.innerHTML = battle.log.slice(-6).map(m=>"<div>"+m+"</div>").join("");
+  logEl.scrollTop = logEl.scrollHeight;
+
+  const row = $("#partyRow"); row.innerHTML = "";
+  ["hero","serena"].forEach(key=>{
+    const c = state.chars[key];
+    const isActive = !battle.finished && aliveKeys().length>0 && currentActorKey()===key && c.hp>0;
+    const ko = c.hp<=0;
+    const div = document.createElement("div");
+    div.className = "party-card" + (isActive?" active-turn":"") + (ko?" ko":"");
+    div.innerHTML =
+      (battle.defending[key] && !ko ? '<div class="defend-tag">'+iconSvg("i-shield",13)+'</div>' : "")+
+      '<div class="pc-name">'+(key==="hero"?heroName():c.name)+'<span class="pc-lv">Lv.'+c.level+'</span></div>'+
+      '<div class="bar-row"><span class="bar-tag">HP</span><div class="bar-track"><div class="bar-fill hp" style="width:'+clamp(c.hp/c.maxHp*100,0,100)+'%;"></div></div></div>'+
+      '<div class="bar-row"><span class="bar-tag">MP</span><div class="bar-track"><div class="bar-fill mp" style="width:'+clamp(c.mp/c.maxMp*100,0,100)+'%;"></div></div></div>';
+    row.appendChild(div);
+  });
+
+  $("#btnAuto").classList.toggle("on", battle.auto);
+  $("#btnSpeed").textContent = "再生速度 x"+battle.speed;
+  renderBattleControls();
+}
+
+function renderBattleControls(){
+  renderTurnOrder();
+  const grid = $("#cmdGrid");
+  if(battle.finished){ grid.innerHTML = ""; $("#turnIndicator").textContent = "戦闘終了"; return; }
+  if(battle.idx >= battle.order.length){ grid.innerHTML = ""; $("#turnIndicator").textContent = "禁書喰らいのターン"; return; }
+  const alive = aliveKeys();
+  if(alive.length===0){ return; }
+  const key = currentActorKey();
+  const c = state.chars[key];
+  if(c.hp<=0){ battle.idx++; if(battle.idx >= battle.order.length){ endPlayerRound(); return; } renderBattleControls(); return; }
+  $("#turnIndicator").textContent = (key==="hero"?heroName():c.name)+"のターン";
+
+  const skillName = key==="hero" ? "渾身の一撃" : "迅速の突き";
+  const skillCost = key==="hero" ? 4 : 3;
+  const magicName = key==="hero" ? null : "光の癒し";
+  const magicCost = key==="hero" ? null : 6;
+
+  grid.innerHTML =
+    '<button class="cmd-btn" data-act="attack">'+iconSvg("i-fist",18)+'攻撃<span class="cmd-cost">通常攻撃</span></button>'+
+    '<button class="cmd-btn" data-act="skill" '+(c.mp<skillCost?"disabled":"")+'>'+iconSvg("i-sword",18)+'スキル：'+skillName+'<span class="cmd-cost">MP '+skillCost+'</span></button>'+
+    '<button class="cmd-btn" data-act="magic" '+((!magicName || c.mp<magicCost)?"disabled":"")+'>'+iconSvg("i-spark",18)+(magicName?"魔法："+magicName:"魔法：未習得")+'<span class="cmd-cost">'+(magicName?"MP "+magicCost:"――")+'</span></button>'+
+    '<button class="cmd-btn" data-act="defend">'+iconSvg("i-shield",18)+'防御<span class="cmd-cost">被ダメージ軽減</span></button>'+
+    '<button class="cmd-btn" data-act="item" disabled>'+iconSvg("i-star",18)+'アイテム<span class="cmd-cost">現在は使用不可</span></button>'+
+    '<button class="cmd-btn" data-act="flee" disabled>'+iconSvg("i-arrow",18)+'逃走<span class="cmd-cost">この戦闘では不可</span></button>';
+
+  $all(".cmd-btn", grid).forEach(btn=>{
+    btn.addEventListener("click", ()=>{ if(btn.disabled) return; performAction(key, btn.getAttribute("data-act")); });
+  });
+
+  if(battle.auto && !battle.finished){
+    clearTimeout(battle.autoTimer);
+    battle.autoTimer = setTimeout(()=>{ if(battle && battle.auto && !battle.finished){ performAction(key, "attack"); } }, battle.speed===2 ? 550 : 1100);
+  }
+}
+
+function performAction(actorKey, act){
+  const c = state.chars[actorKey];
+  const e = battle.enemy;
+  const actorName = actorKey==="hero" ? heroName() : c.name;
+  const atk = getAtk(actorKey);
+  let fx = null; // {kind:'slash'|'sparkle', target, text, isHeal}
+
+  if(act==="attack"){
+    const dmg = Math.max(3, Math.round(atk + rnd(-2,2) - e.def*0.4));
+    e.hp -= dmg;
+    logMsg(actorName+"の攻撃！ 禁書喰らいに "+dmg+" のダメージ。");
+    fx = { kind:"slash", target:"enemy", text:"-"+dmg };
+  } else if(act==="skill"){
+    const cost = actorKey==="hero" ? 4 : 3;
+    c.mp -= cost;
+    const dmg = Math.max(4, Math.round(atk*1.6 - e.def*0.4));
+    e.hp -= dmg;
+    const skillName = actorKey==="hero" ? "渾身の一撃" : "迅速の突き";
+    logMsg(actorName+"の「"+skillName+"」！ 禁書喰らいに "+dmg+" のダメージ！");
+    fx = { kind:"slash", target:"enemy", text:"-"+dmg };
+  } else if(act==="magic"){
+    if(actorKey==="serena"){
+      c.mp -= 6;
+      const targetKey = state.chars.hero.hp <= state.chars.serena.hp ? "hero" : "serena";
+      const target = state.chars[targetKey];
+      const heal = 15;
+      target.hp = clamp(target.hp+heal, 0, target.maxHp);
+      logMsg(actorName+"の「光の癒し」！ "+(targetKey==="hero"?heroName():target.name)+"のHPが "+heal+" 回復した。");
+      fx = { kind:"sparkle", target:targetKey, text:"+"+heal };
+    }
+  } else if(act==="defend"){
+    battle.defending[actorKey] = true;
+    logMsg(actorName+"は防御の構えを取った。");
+  }
+
+  save();
+  battle.idx++;
+  renderBattle();
+
+  lungeCard(actorKey);
+  if(fx && fx.kind==="slash"){ flashEnemy(); playSlash(); popDamage("enemy", fx.text, false); }
+  if(fx && fx.kind==="sparkle"){ playSparkle(fx.target); popDamage(fx.target, fx.text, true); }
+
+  if(e.hp<=0){ battleWin(); return; }
+  if(battle.idx >= battle.order.length){ endPlayerRound(); } else { renderBattleControls(); }
+}
+function endPlayerRound(){ setTimeout(()=>{ enemyTurn(); }, battle.auto ? (battle.speed===2?250:500) : 250); }
+function enemyTurn(){
+  const alive = aliveKeys();
+  if(alive.length===0){ battleLose(); return; }
+  const targetKey = alive[rnd(0, alive.length-1)];
+  const target = state.chars[targetKey];
+  const e = battle.enemy;
+  const targetDef = getDef(targetKey);
+  let dmg = Math.max(2, rnd(e.atkMin, e.atkMax) - Math.round(targetDef*0.4));
+  if(battle.defending[targetKey]){ dmg = Math.round(dmg*0.5); battle.defending[targetKey] = false; }
+  target.hp = clamp(target.hp - dmg, 0, target.maxHp);
+  logMsg("禁書喰らいの攻撃！ "+(targetKey==="hero"?heroName():target.name)+"に "+dmg+" のダメージ。");
+  save();
+  renderBattle();
+  enemyAttackAnim();
+  hitFlashCard(targetKey);
+  popDamage(targetKey, "-"+dmg, false);
+  if(aliveKeys().length===0){ battleLose(); return; }
+  battle.idx = 0; battle.round++;
+  renderBattle();
+}
+function flashEnemy(){ const fig = $("#enemyFigure"); fig.classList.remove("hit"); void fig.offsetWidth; fig.classList.add("hit"); }
+
+function battleWin(){
+  battle.finished = true;
+  clearTimeout(battle.autoTimer);
+  logMsg("禁書喰らいを撃退した！");
+  renderBattle();
+  showBattleBanner("勝利！", "victory");
+
+  const heroExp = 15, serenaExp = 12, goldGain = 20;
+  const heroLv = grantExp("hero", heroExp);
+  const serenaLv = grantExp("serena", serenaExp);
+  state.gold += goldGain;
+  state.bonds.serena = clamp((state.bonds.serena||0) + 10, 0, 99);
+  state.stage = "battle_won";
+  save();
+
+  setTimeout(()=>{
+    openModal(
+      '<div class="modal-icon-row"><div class="icon-badge">'+iconSvg("i-check",20)+'</div><div><div class="modal-tag">勝利</div><div class="modal-title">禁書喰らいを撃退した！</div></div></div>'+
+      '<p>'+heroName()+' は経験値を '+heroExp+' 獲得した。'+(heroLv?'（レベルアップ！ Lv.'+state.chars.hero.level+'）':'')+'<br>'+
+      'セレナ は経験値を '+serenaExp+' 獲得した。'+(serenaLv?'（レベルアップ！ Lv.'+state.chars.serena.level+'）':'')+'<br>'+
+      'ゴールドを '+goldGain+' 獲得した。</p>'+
+      '<button class="btn btn-primary btn-block" id="mNext">事件簿へ向かう</button>'
+    );
+    $("#mNext").addEventListener("click", ()=>{ closeModal(); startStory("postbattle"); goto("screen-story"); });
+  }, 900);
+}
+function battleLose(){
+  battle.finished = true;
+  clearTimeout(battle.autoTimer);
+  logMsg("探偵騎士団は後退を余儀なくされた……");
+  renderBattle();
+  showBattleBanner("一時撤退……", "defeat");
+  setTimeout(()=>{
+    openModal(
+      '<div class="modal-icon-row"><div class="icon-badge">'+iconSvg("i-heart",20)+'</div><div><div class="modal-tag">戦闘不能</div><div class="modal-title">一時撤退……</div></div></div>'+
+      '<p>二人は体勢を立て直すため、一度距離を取った。もう一度挑もう。</p>'+
+      '<button class="btn btn-gold btn-block" id="mRetry">もう一度挑む</button>'
+    );
+    $("#mRetry").addEventListener("click", ()=>{ closeModal(); initBattle(); });
+  }, 900);
+}
+function grantExp(key, amount){
+  const c = state.chars[key];
+  c.exp += amount;
+  let leveled = false;
+  while(c.exp >= c.expNext){
+    c.exp -= c.expNext; c.level += 1; c.expNext = 20 + (c.level-1)*10;
+    c.maxHp += 6; c.maxMp += 3; c.atk += 2; c.def += 1;
+    c.hp = c.maxHp; c.mp = c.maxMp;
+    leveled = true;
+  }
+  return leveled;
+}
+$("#btnAuto").addEventListener("click", ()=>{ battle.auto = !battle.auto; renderBattle(); });
+$("#btnSpeed").addEventListener("click", ()=>{ battle.speed = battle.speed===1 ? 2 : 1; renderBattle(); });
+
+/* ============================================================
+   CASE FILE (tabbed)
+   ============================================================ */
+$all(".case-tab").forEach(tab=>{
+  tab.addEventListener("click", ()=>{
+    $all(".case-tab").forEach(t=>t.classList.remove("active"));
+    $all(".case-panel").forEach(p=>p.classList.remove("active"));
+    tab.classList.add("active");
+    $("#panel-"+tab.getAttribute("data-tab")).classList.add("active");
+  });
+});
+
+function renderCase(){
+  // overview
+  const goalMap = { exploring:"証拠を集める", battle_pending:"脅威を退ける", battle_won:"証拠を整理する", case_file:"真相を推理する", result:"事件を締めくくる", solved:"次の事件へ備える" };
+  $("#ovGoal").textContent = goalMap[state.stage] || "証拠を集める";
+  const solved = state.stage==="solved" || state.stage==="result";
+  $("#ovStatus").textContent = solved ? "解決" : "未解決";
+  $("#ovStatus").classList.toggle("solved", solved);
+
+  // people
+  const peopleEl = $("#peopleList");
+  peopleEl.innerHTML = "";
+  PERSONS.forEach(p=>{
+    const revealed = !p.requiresHotspot || state.hotspots[p.requiresHotspot];
+    const hotspotData = HOTSPOTS.find(h=>h.id===p.requiresHotspot);
+    const div = document.createElement("div");
+    div.className = "card person-card";
+    div.innerHTML =
+      '<div class="person-portrait">'+iconSvg(p.icon,20)+'</div>'+
+      '<div style="flex:1;"><div class="person-name">'+p.name+'</div><div class="person-role">'+p.role+'</div>'+
+      (revealed && hotspotData ? '<div class="person-quote">'+hotspotData.evidenceDesc+'</div>' : (p.requiresHotspot ? '<p class="small" style="margin:0 0 6px;">未調査：調べると証言が記録される。</p>' : ''))+
+      '<p class="person-note">'+p.note+'</p></div>';
+    peopleEl.appendChild(div);
+  });
+
+  // evidence tab (clues only)
+  renderEvidenceTab("evidenceList", "clue", "まだ手がかりが見つかっていない。");
+  // testimony tab
+  renderEvidenceTab("testimonyList", "testimony", "まだ聞き込みをしていない。");
+
+  // reasoning
+  const optEl = $("#reasonOptions");
+  optEl.innerHTML = "";
+  $("#reasonFeedback").textContent = "";
+  $("#btnSolve").style.display = state.reasonCorrect ? "flex" : "none";
+  REASON_OPTIONS.forEach(opt=>{
+    const btn = document.createElement("button");
+    btn.className = "reason-option" + (state.reasonCorrect && opt.key===REASON_CORRECT ? " correct" : "");
+    btn.innerHTML = '<div class="opt-letter">'+opt.key+'</div><div>'+opt.text+'</div>';
+    btn.disabled = state.reasonCorrect;
+    btn.addEventListener("click", ()=>{
+      if(opt.key===REASON_CORRECT){
+        state.reasonCorrect = true; save();
+        btn.classList.add("correct");
+        $("#reasonFeedback").style.color = "var(--gold)";
+        $("#reasonFeedback").textContent = "推理成功。すべての証拠と証言が一つの真実を示している。";
+        $all(".reason-option", optEl).forEach(b=>b.disabled=true);
+        $("#btnSolve").style.display = "flex";
+      } else {
+        state.reasonAttempts += 1; save();
+        btn.classList.add("wrong");
+        $("#reasonFeedback").style.color = "var(--blood-red)";
+        $("#reasonFeedback").textContent = "その推理は、集めた証拠・証言と矛盾している……もう一度考え直そう。";
+        setTimeout(()=>btn.classList.remove("wrong"), 900);
+      }
+    });
+    optEl.appendChild(btn);
+  });
+}
+function renderEvidenceTab(elId, type, emptyMsg){
+  const el = $("#"+elId);
+  el.innerHTML = "";
+  const items = HOTSPOTS.filter(h=>h.type===type && state.evidence.includes(h.id));
+  if(items.length===0){ el.innerHTML = '<div class="empty-note">'+emptyMsg+'</div>'; return; }
+  items.forEach(h=>{
+    const div = document.createElement("div");
+    div.className = "card evidence-card" + (h.important?" important":"");
+    div.innerHTML =
+      '<div class="icon-badge">'+iconSvg(h.icon,17)+'</div>'+
+      '<div><div class="evidence-title">'+h.evidenceTitle+(h.important?' <span class="tag-chip">重要</span>':'')+'</div>'+
+      '<p class="evidence-desc">'+h.evidenceDesc+'</p>'+
+      '<div class="evidence-meta">発見場所：王立美術館・肖像画の間</div></div>';
+    el.appendChild(div);
+  });
+}
+$("#btnSolve").addEventListener("click", ()=>{
+  if(!state.rewardsGranted){
+    state.gold += 50;
+    grantExp("hero", 10);
+    grantExp("serena", 10);
+    state.rewardsGranted = true;
+    save();
+  }
+  state.stage = "result"; save();
+  renderResult();
+  goto("screen-result");
+});
+
+/* ============================================================
+   RESULT
+   ============================================================ */
+function reasonRank(){
+  const a = state.reasonAttempts;
+  if(a===0) return "S";
+  if(a<=2) return "A";
+  return "B";
+}
+function renderResult(){
+  const blackout = $("#resultBlackout");
+  blackout.style.animation = "none"; void blackout.offsetWidth; blackout.style.animation = "";
+  const rows = [
+    { icon:"i-star", label:"獲得経験値", value:heroName()+" +10 ／ セレナ +10" },
+    { icon:"i-coin", label:"獲得ゴールド", value:"+50 G（所持 "+state.gold+" G）" },
+    { icon:"i-scroll", label:"登録された証拠・証言", value:state.evidence.length+" 件" },
+    { icon:"i-mask", label:"解放された情報", value:"「第十三王」の伏線" },
+    { icon:"i-flag", label:"推理評価", value:"" }
+  ];
+  const el = $("#resultRewards");
+  el.innerHTML = rows.map((r,i)=>{
+    const delay = (0.9 + i*0.22).toFixed(2)+"s";
+    const valueHtml = r.label==="推理評価" ? '<span class="rank-badge">'+reasonRank()+'</span>' : '<span class="reward-value">'+r.value+'</span>';
+    return '<div class="reward-row reveal-item" style="animation-delay:'+delay+';">'+
+      '<div class="icon-badge">'+iconSvg(r.icon,16)+'</div>'+
+      '<div style="flex:1;"><div class="reward-label">'+r.label+'</div>'+valueHtml+'</div></div>';
+  }).join("");
+}
+$("#btnResultNext").addEventListener("click", ()=>{
+  state.stage="solved";
+  state.bonds.serena = clamp((state.bonds.serena||0) + 10, 0, 99);
+  save();
+  renderSolved(); goto("screen-solved");
+});
+
+/* ============================================================
+   SOLVED
+   ============================================================ */
+function renderSolved(){}
+$("#btnBackHomeFromSolved").addEventListener("click", ()=>{ renderHome(); goto("screen-home"); });
+
+/* ============================================================
+   CHARACTERS
+   ============================================================ */
+const CHAR_KEYS = ["hero","serena","noah","lucia"];
+let selectedCharKey = "hero";
+let charActiveTab = "stats";
+
+function renderCharacters(){
+  const row = $("#charSelectRow");
+  row.innerHTML = CHAR_KEYS.map(key=>{
+    const c = state.chars[key];
+    return '<button class="char-chip'+(key===selectedCharKey?" active":"")+(c.unlocked?"":" locked")+'" data-charkey="'+key+'">'+
+      '<div class="chip-avatar">'+iconSvg(c.unlocked?c.icon:"i-mask",20)+'</div>'+
+      '<div class="chip-name">'+(c.unlocked?(key==="hero"?heroName():c.name):"？？？")+'</div></button>';
+  }).join("");
+  $all(".char-chip", row).forEach(chip=>{
+    chip.addEventListener("click", ()=>{ selectedCharKey = chip.getAttribute("data-charkey"); renderCharacters(); });
+  });
+  renderCharDetail(selectedCharKey);
+}
+
+function renderCharDetail(key){
+  const c = state.chars[key];
+  const headerEl = $("#charHeroCard");
+  const tabbar = $("#charTabbar");
+
+  if(!c.unlocked){
+    tabbar.style.display = "none";
+    $all(".char-panel").forEach(p=>p.classList.remove("active"));
+    headerEl.innerHTML =
+      '<div class="char-hero-portrait" style="border-color:var(--line-hair);filter:grayscale(1) opacity(.6);">'+iconSvg("i-mask",34)+'</div>'+
+      '<div class="ch-name" style="color:var(--text-faint);">？？？（'+c.name+'）</div>'+
+      '<div class="ch-role">'+c.role+' ・ 未加入</div>'+
+      '<p class="small" style="margin-top:8px;">'+c.bio+'<br><span style="color:var(--gold);">今後の事件で仲間になる……かもしれない。</span></p>';
+    ["stats","equip","skills","lore","bond"].forEach(t=> $("#cpanel-"+t).innerHTML = "");
+    return;
+  }
+  tabbar.style.display = "flex";
+  headerEl.innerHTML =
+    '<div class="char-hero-portrait">'+iconSvg(c.icon,34)+'</div>'+
+    '<div class="ch-name">'+(key==="hero"?heroName():c.name)+'</div>'+
+    '<div class="ch-role">'+c.role+' ・ '+c.weapon+(c.magic?' ・ '+c.magic:'')+'</div>'+
+    '<div class="ch-lv-row"><span>Lv <b>'+c.level+'</b></span><span>ATK <b>'+getAtk(key)+'</b></span><span>DEF <b>'+getDef(key)+'</b></span></div>';
+
+  renderCharStatsPanel(key);
+  renderCharEquipPanel(key);
+  renderCharSkillsPanel(key);
+  renderCharLorePanel(key);
+  renderCharBondPanel(key);
+
+  $all(".char-tab", tabbar).forEach(t=> t.classList.toggle("active", t.getAttribute("data-ctab")===charActiveTab));
+  ["stats","equip","skills","lore","bond"].forEach(t=> $("#cpanel-"+t).classList.toggle("active", t===charActiveTab));
+}
+
+$all(".char-tab").forEach(tab=>{
+  tab.addEventListener("click", ()=>{
+    charActiveTab = tab.getAttribute("data-ctab");
+    renderCharDetail(selectedCharKey);
+  });
+});
+
+function renderCharStatsPanel(key){
+  const c = state.chars[key];
+  $("#cpanel-stats").innerHTML =
+    '<div class="card">'+
+      '<div class="char-stats">'+
+        '<div>Lv <b>'+c.level+'</b></div><div>ATK <b>'+getAtk(key)+'</b></div>'+
+        '<div>HP <b>'+c.hp+'/'+c.maxHp+'</b></div><div>DEF <b>'+getDef(key)+'</b></div>'+
+        '<div>MP <b>'+c.mp+'/'+c.maxMp+'</b></div><div>EXP <b>'+c.exp+'/'+c.expNext+'</b></div>'+
+      '</div>'+
+      '<div class="exp-row bar-row"><span class="bar-tag" style="width:24px;">EXP</span><div class="bar-track"><div class="bar-fill mp" style="width:'+clamp(c.exp/c.expNext*100,0,100)+'%;"></div></div></div>'+
+    '</div>'+
+    '<div class="section-label">プロフィール</div>'+
+    '<div class="card"><p style="margin:0;">'+c.bio+'</p></div>';
+}
+
+function renderCharEquipPanel(key){
+  const el = $("#cpanel-equip");
+  if(key==="noah" || key==="lucia"){ el.innerHTML = '<div class="empty-note">仲間になると装備を整えられるようになる。</div>'; return; }
+  const c = state.chars[key];
+  const equipped = equippedItem(key);
+  let html = '<div class="section-label">現在の装備</div>';
+  html += '<div class="card equip-slot-card">'+
+    '<div class="icon-badge">'+iconSvg(equipped?equipped.icon:"i-shield",18)+'</div>'+
+    '<div style="flex:1;">'+
+      (equipped
+        ? '<div class="item-name">'+equipped.name+'</div><div class="item-desc">'+equipped.desc+'</div>'
+        : '<div class="equip-empty">何も装備していない</div>')+
+    '</div>'+
+    (equipped ? '<button class="btn btn-ghost btn-sm" data-unequip="'+key+'">はずす</button>' : '')+
+  '</div>';
+  html += '<div class="section-label">所持アクセサリー</div>';
+  html += '<div class="card">';
+  if(state.inventory.length===0){ html += '<div class="empty-note">所持しているアクセサリーがない。</div>'; }
+  else {
+    state.inventory.forEach(id=>{
+      const item = ACCESSORIES.find(a=>a.id===id);
+      if(!item) return;
+      const isEquipped = c.equipped===id;
+      const bonusText = [item.bonus.atk?"ATK+"+item.bonus.atk:"", item.bonus.def?"DEF+"+item.bonus.def:""].filter(Boolean).join(" ／ ");
+      html += '<div class="item-row">'+
+        '<div class="icon-badge">'+iconSvg(item.icon,16)+'</div>'+
+        '<div style="flex:1;"><div class="item-name">'+item.name+'</div><div class="item-desc">'+item.desc+'</div><div class="item-bonus">'+bonusText+'</div></div>'+
+        '<button class="btn btn-sm '+(isEquipped?'btn-gold':'btn-ghost')+'" data-equip="'+id+'" data-charkey="'+key+'">'+(isEquipped?'装備中':'装備する')+'</button>'+
+      '</div>';
+    });
+  }
+  html += '</div>';
+  el.innerHTML = html;
+
+  $all("[data-unequip]", el).forEach(btn=> btn.addEventListener("click", ()=>{
+    state.chars[btn.getAttribute("data-unequip")].equipped = null; save(); renderCharDetail(selectedCharKey);
+  }));
+  $all("[data-equip]", el).forEach(btn=> btn.addEventListener("click", ()=>{
+    const k = btn.getAttribute("data-charkey");
+    const id = btn.getAttribute("data-equip");
+    state.chars[k].equipped = (state.chars[k].equipped===id) ? null : id;
+    save(); renderCharDetail(selectedCharKey);
+  }));
+}
+
+function renderCharSkillsPanel(key){
+  const list = SKILLS[key] || [];
+  const c = state.chars[key];
+  $("#cpanel-skills").innerHTML = list.map(s=>{
+    const learned = s.cost!==null && c.unlocked && c.level>=s.unlockLv;
+    return '<div class="card skill-card">'+
+      '<div class="icon-badge">'+iconSvg(s.icon,16)+'</div>'+
+      '<div style="flex:1;"><div class="skill-name">'+s.name+(s.cost!==null?'<span class="skill-cost-chip">MP '+s.cost+'</span>':'')+'</div>'+
+      '<div class="skill-desc">'+s.desc+(s.unlockLv?' （Lv.'+s.unlockLv+'で習得）':'')+'</div></div>'+
+    '</div>';
+  }).join("");
+}
+
+function renderCharLorePanel(key){
+  const list = LORE[key] || [];
+  $("#cpanel-lore").innerHTML = list.map(l=>{
+    const unlocked = loreCondMet(l.cond);
+    return '<div class="card lore-card'+(unlocked?"":" locked")+'">'+
+      '<div class="icon-badge">'+iconSvg(unlocked?"i-scroll":"i-mask",16)+'</div>'+
+      '<div style="flex:1;"><div class="lore-title">'+(unlocked?l.title:"？？？")+'</div>'+
+      (unlocked ? '<div class="lore-text">'+l.text+'</div>' : '<div class="lore-hint">条件を満たすと解放される秘録。</div>')+
+      '</div></div>';
+  }).join("");
+}
+
+function renderCharBondPanel(key){
+  const el = $("#cpanel-bond");
+  if(key==="hero"){
+    let html = '<div class="section-label">仲間との絆</div>';
+    ["serena","noah","lucia"].forEach(k=>{
+      const c = state.chars[k];
+      const val = state.bonds[k]||0;
+      const info = bondLevelInfo(val);
+      const kvLine = '<div class="kv-row" style="border:none;padding:0 0 6px;"><span class="k">'+(c.unlocked?c.name:"？？？（"+c.name+"）")+'</span><span class="v">'+(c.unlocked?val:"―")+'</span></div>';
+      const bodyLine = c.unlocked
+          ? '<div class="bond-gauge-wrap"><div class="bond-gauge-track"><div class="bond-gauge-fill" style="width:'+clamp(val/30*100,0,100)+'%;"></div></div></div>'+
+            '<div class="bond-level-label">'+info.label+'</div><div class="bond-flavor">'+info.flavor+'</div>'
+          : '<p class="small" style="margin:6px 0 0;">まだ出会っていない。</p>';
+      html += '<div class="card" style="margin-bottom:10px;">'+kvLine+bodyLine+'</div>';
+    });
+    el.innerHTML = html;
+    return;
+  }
+  const val = state.bonds[key]||0;
+  const info = bondLevelInfo(val);
+  const c = state.chars[key];
+  el.innerHTML =
+    '<div class="card">'+
+      '<div class="kv-row" style="border:none;padding:0 0 8px;"><span class="k">'+heroName()+' と '+c.name+' の絆</span></div>'+
+      '<div class="bond-gauge-wrap"><div class="bond-gauge-track"><div class="bond-gauge-fill" style="width:'+clamp(val/30*100,0,100)+'%;"></div></div></div>'+
+      '<div class="bond-level-label">'+info.label+'</div>'+
+      '<div class="bond-flavor">'+info.flavor+'</div>'+
+    '</div>';
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+applySettings();
+renderHome();
+})();
+</script>
+<script>
+// PWA: Service Workerの登録（GitHub Pages等、http(s)で配信されている場合のみ）
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {
+      // 登録に失敗しても、ゲーム自体はオンライン時と同様に動作します
+    });
+  });
+}
+</script>
+</body>
+</html>
