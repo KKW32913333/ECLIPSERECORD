@@ -402,6 +402,16 @@ p{line-height:1.85; color:var(--text-sub); margin:0 0 .8em;}
 .hotspot.done::after{ content:"✓"; position:absolute; top:-4px; right:-4px; width:17px;height:17px; border-radius:50%; background:var(--arcane-blue); color:#fff; font-size:10.5px; display:flex; align-items:center; justify-content:center; }
 @keyframes hotspotPulse{ 0%,100%{ box-shadow:0 0 14px rgba(214,184,106,0.35);} 50%{ box-shadow:0 0 26px rgba(214,184,106,0.65);} }
 .hotspot-tag{ position:absolute; bottom:-16px; left:50%; transform:translateX(-50%); font-size:8.5px; white-space:nowrap; color:var(--text-faint); }
+.hotspot.selected{ box-shadow:0 0 0 4px rgba(240,213,138,0.4), 0 0 30px rgba(240,213,138,0.7); border-color:var(--gold-bright); }
+.explore-detail-panel{ margin:10px 16px; min-height:0; }
+.edp-placeholder{ text-align:center; padding:16px; color:var(--text-faint); font-size:12px; border:1px dashed var(--line-hair); border-radius:14px; }
+.edp-card{ display:flex; gap:12px; background:var(--bg-panel); border:1px solid var(--line-gold); border-radius:14px; padding:13px; align-items:flex-start; }
+.edp-icon{ width:42px;height:42px;border-radius:12px; background:var(--royal-purple-soft); display:flex;align-items:center;justify-content:center; border:1px solid var(--line-gold); flex-shrink:0; }
+.edp-icon .icon{ width:19px;height:19px; color:var(--gold-bright); }
+.edp-body{ flex:1; min-width:0; }
+.edp-tag{ font-size:10px; color:var(--gold); margin-bottom:2px; }
+.edp-title{ font-size:13.5px; font-weight:700; color:var(--moon-silver); margin-bottom:4px; }
+.edp-desc{ font-size:11.5px; color:var(--text-sub); line-height:1.7; margin-bottom:10px; }
 .explore-footer{ padding:12px 16px 18px; }
 
 /* ============ MODAL ============ */
@@ -941,6 +951,7 @@ p{line-height:1.85; color:var(--text-sub); margin:0 0 .8em;}
       <div class="stage-overlay"></div>
       <div class="explore-caption">静まり返った展示室。月明かりが割れた窓から差し込んでいる。金色の印は手がかり、青い印は聞き込みだ。</div>
     </div>
+    <div class="explore-detail-panel" id="exploreDetailPanel"></div>
     <div class="explore-footer">
       <button class="btn btn-gold btn-block" id="btnExploreNext" disabled>すべて調べてから奥へ進む</button>
     </div>
@@ -1904,16 +1915,17 @@ $("#btnLog").addEventListener("click", (e)=>{
 /* ============================================================
    EXPLORE
    ============================================================ */
+let selectedHotspotId = null;
 function renderExplore(){
   const stage = $("#exploreStage");
   $all(".hotspot", stage).forEach(el=>el.remove());
   HOTSPOTS.forEach(h=>{
     const done = !!state.hotspots[h.id];
     const el = document.createElement("div");
-    el.className = "hotspot" + (h.type==="testimony"?" testimony":"") + (done ? " done" : "");
+    el.className = "hotspot" + (h.type==="testimony"?" testimony":"") + (done ? " done" : "") + (h.id===selectedHotspotId ? " selected" : "");
     el.style.top = h.top; el.style.left = h.left;
-    el.innerHTML = iconSvg(h.icon, 22);
-    el.addEventListener("click", ()=> openHotspot(h));
+    el.innerHTML = iconSvg(h.type==="testimony" ? "i-user" : "i-search", 22);
+    el.addEventListener("click", ()=> selectHotspot(h.id));
     stage.appendChild(el);
   });
   const count = HOTSPOTS.filter(h=>state.hotspots[h.id]).length;
@@ -1921,24 +1933,36 @@ function renderExplore(){
   const btn = $("#btnExploreNext");
   btn.disabled = count < HOTSPOTS.length;
   btn.textContent = count < HOTSPOTS.length ? "すべて調べてから奥へ進む" : "手がかりは揃った。先へ進む";
+  renderExploreDetail();
 }
-function openHotspot(h){
+function selectHotspot(id){
+  selectedHotspotId = id;
+  renderExplore();
+}
+function renderExploreDetail(){
+  const panel = $("#exploreDetailPanel");
+  const h = HOTSPOTS.find(x=>x.id===selectedHotspotId);
+  if(!h){ panel.innerHTML = '<div class="edp-placeholder">気になる場所をタップして調べてみよう。</div>'; return; }
   const already = !!state.hotspots[h.id];
-  openModal(
-    '<div class="modal-icon-row"><div class="icon-badge">'+iconSvg(h.icon,20)+'</div><div><div class="modal-tag">'+(h.type==="testimony"?"聞き込み":"調査")+'</div><div class="modal-title">'+h.title+'</div></div></div>'+
-    '<p>'+h.desc+'</p>'+
-    (already ? '<p class="small">（この場所はすでに調べた）</p>' : '')+
-    '<button class="btn btn-primary btn-block" id="mClose">'+(already?'閉じる':'事件簿に記録する')+'</button>'
-  );
-  $("#mClose").addEventListener("click", ()=>{
-    if(!already){
+  panel.innerHTML =
+    '<div class="edp-card">'+
+      '<div class="edp-icon">'+iconSvg(h.type==="testimony"?"i-user":"i-search",19)+'</div>'+
+      '<div class="edp-body">'+
+        '<div class="edp-tag">'+(h.type==="testimony"?"聞き込み":"調査")+'</div>'+
+        '<div class="edp-title">'+h.title+'</div>'+
+        '<div class="edp-desc">'+h.desc+'</div>'+
+        '<button class="btn '+(already?'btn-ghost':'btn-gold')+' btn-block" id="btnExploreConfirm" '+(already?'disabled':'')+'>'+(already?'記録済み':'事件簿に記録する')+'</button>'+
+      '</div>'+
+    '</div>';
+  const btn = $("#btnExploreConfirm");
+  if(btn && !already){
+    btn.addEventListener("click", ()=>{
       state.hotspots[h.id] = true;
       if(!state.evidence.includes(h.id)) state.evidence.push(h.id);
       save();
       renderExplore();
-    }
-    closeModal();
-  });
+    });
+  }
 }
 $("#btnExploreNext").addEventListener("click", ()=>{
   if($("#btnExploreNext").disabled) return;
