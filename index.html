@@ -341,6 +341,20 @@ p{line-height:1.85; color:var(--text-sub); margin:0 0 .8em;}
 .map-node .node-status{ font-size:10px; color:var(--gold); letter-spacing:.05em; }
 .map-node .node-meta{ font-size:9.5px; color:var(--text-faint); }
 .map-node.locked .node-status{ color:var(--text-faint); }
+.map-node.selected .node-dot{ box-shadow:0 0 0 4px rgba(240,213,138,0.35), 0 0 34px rgba(240,213,138,0.75); border-color:var(--gold-bright); }
+.map-node.selected .node-label{ color:var(--gold-bright); }
+
+.map-detail-panel{ margin:0 16px 16px; border-radius:16px; overflow:hidden; border:1px solid var(--line-gold); background:var(--bg-panel); box-shadow:0 0 20px rgba(214,184,106,0.08); }
+.mdp-art{ height:110px; background-size:cover; background-position:center; position:relative; }
+.mdp-art::after{ content:""; position:absolute; inset:0; background:linear-gradient(180deg, rgba(8,9,20,0.1), rgba(8,9,20,0.85)); }
+.mdp-name{ position:absolute; left:14px; bottom:8px; font-family:var(--font-head); font-size:16px; color:#fff; text-shadow:0 2px 8px rgba(0,0,0,0.6); z-index:1; }
+.mdp-status-pill{ position:absolute; right:12px; top:10px; font-size:10px; padding:3px 10px; border-radius:var(--radius-pill); background:rgba(9,10,20,0.65); border:1px solid var(--line-gold); color:var(--gold-bright); z-index:1; }
+.mdp-body{ padding:12px 14px; }
+.mdp-info-row{ display:flex; justify-content:space-between; font-size:12px; padding:6px 0; border-bottom:1px dashed var(--line-hair); }
+.mdp-info-row:last-child{ border-bottom:none; }
+.mdp-info-row .k{ color:var(--text-faint); }
+.mdp-info-row .v{ color:var(--moon-silver); font-weight:600; }
+.mdp-footer{ padding:0 14px 14px; }
 
 /* ============ STORY / DIALOGUE ============ */
 .story-stage{
@@ -356,7 +370,11 @@ p{line-height:1.85; color:var(--text-sub); margin:0 0 .8em;}
 .dialogue-next{ align-self:flex-end; margin-top:10px; font-size:12px; color:var(--text-faint); display:flex; align-items:center; gap:6px; animation:bounceHint 1.6s ease-in-out infinite; }
 @keyframes bounceHint{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(4px);} }
 .dialogue-tools{ display:flex; gap:8px; position:absolute; top:10px; right:14px; z-index:3; }
-.dlg-tool-btn{ background:rgba(10,11,22,0.5); border:1px solid var(--line-hair); border-radius:var(--radius-pill); padding:5px 10px; font-size:10px; color:var(--text-sub); }
+.dlg-tool-btn{ background:rgba(10,11,22,0.5); border:1px solid var(--line-hair); border-radius:var(--radius-pill); padding:5px 10px; font-size:10px; color:var(--text-sub); font-weight:700; letter-spacing:.03em; }
+.dlg-tool-btn.on{ border-color:var(--arcane-blue); color:#cfe0ff; background:rgba(124,174,255,0.16); }
+.dialogue-choices{ display:flex; flex-direction:column; gap:8px; margin-top:12px; }
+.dialogue-choice-btn{ background:var(--bg-panel-2); border:1px solid var(--line-gold); border-radius:12px; padding:11px 14px; font-size:13px; color:var(--text-main); text-align:left; font-family:var(--font-body); }
+.dialogue-choice-btn:active{ transform:scale(0.98); background:rgba(214,184,106,0.12); }
 
 /* ============ EXPLORE SCREEN ============ */
 .explore-info{ margin:12px 16px 0; padding:12px 14px; }
@@ -835,49 +853,43 @@ p{line-height:1.85; color:var(--text-sub); margin:0 0 .8em;}
   <!-- ============ MAP ============ -->
   <section class="screen" id="screen-map">
     <div class="topbar">
-      <div><div class="chapter-tag">第一章</div><div class="screen-title">冒険マップ・エルディア王都</div></div>
-      <div></div>
+      <div><div class="chapter-tag">エルディア大陸</div><div class="screen-title">冒険マップ</div></div>
+      <div class="resource-pill stamina" style="position:static;"><svg class="icon"><use href="#i-heart"/></svg><span id="mapStamina">5 / 5</span></div>
     </div>
-    <div class="map-canvas">
+    <div class="map-canvas" id="mapCanvas">
       <div class="map-path"></div>
-      <div class="map-node" style="top:9%;" id="mapNodeMuseum">
+      <div class="map-node" style="top:9%;" id="mapNodeMuseum" data-node="museum">
         <div class="node-dot" id="nodeArtMuseum"><svg class="icon"><use href="#i-frame"/></svg></div>
         <div class="node-label">王立美術館</div>
         <div class="node-status" id="museumStatus">事件受注可能</div>
-        <div class="node-meta">推奨Lv.1 ・ 消費スタミナ 1</div>
       </div>
-      <div class="map-node locked" style="top:26%;" id="mapNodeCh2">
+      <div class="map-node locked" style="top:26%;" id="mapNodeCh2" data-node="ch2">
         <div class="node-dot" id="nodeArtCh2"><svg class="icon"><use href="#i-door"/></svg></div>
         <div class="node-label">忘れられた回廊</div>
         <div class="node-status" id="ch2Status">第一章クリアで解放</div>
-        <div class="node-meta">推奨Lv.3</div>
       </div>
-      <div class="map-node locked" style="top:43%;">
+      <div class="map-node locked" style="top:43%;" data-node="academy">
         <div class="node-dot" id="nodeArtAcademy"><svg class="icon"><use href="#i-scroll"/></svg></div>
         <div class="node-label">王立魔法学院</div>
         <div class="node-status">未解放</div>
-        <div class="node-meta">霧に閉ざされている</div>
       </div>
-      <div class="map-node locked" style="top:60%;">
+      <div class="map-node locked" style="top:60%;" data-node="capital">
         <div class="node-dot" id="nodeArtCapital"><svg class="icon"><use href="#i-mask"/></svg></div>
         <div class="node-label">王城 奥書庫</div>
         <div class="node-status">未解放</div>
-        <div class="node-meta">霧に閉ざされている</div>
       </div>
-      <div class="map-node locked" style="top:77%;">
+      <div class="map-node locked" style="top:77%;" data-node="forest">
         <div class="node-dot" id="nodeArtForest"><svg class="icon"><use href="#i-map"/></svg></div>
         <div class="node-label">灰の森</div>
         <div class="node-status">未解放</div>
-        <div class="node-meta">霧に閉ざされている</div>
       </div>
-      <div class="map-node locked" style="top:94%;">
+      <div class="map-node locked" style="top:94%;" data-node="underground">
         <div class="node-dot" id="nodeArtUnderground"><svg class="icon"><use href="#i-door"/></svg></div>
         <div class="node-label">地下水路</div>
         <div class="node-status">未解放</div>
-        <div class="node-meta">霧に閉ざされている</div>
       </div>
     </div>
-    <p class="small" style="text-align:center;padding:0 20px 16px;">光る場所をタップして調査に向かおう。</p>
+    <div class="map-detail-panel" id="mapDetailPanel"></div>
   </section>
 
   <!-- ============ STORY ============ -->
@@ -887,13 +899,18 @@ p{line-height:1.85; color:var(--text-sub); margin:0 0 .8em;}
       <div></div>
     </div>
     <div class="story-stage">
-      <div class="dialogue-tools"><button class="dlg-tool-btn" id="btnSkip">スキップ</button></div>
+      <div class="dialogue-tools">
+        <button class="dlg-tool-btn" id="btnAutoPlay">AUTO</button>
+        <button class="dlg-tool-btn" id="btnLog">LOG</button>
+        <button class="dlg-tool-btn" id="btnSkip">SKIP</button>
+      </div>
       <div class="story-portrait" id="storyPortrait"></div>
     </div>
     <div class="dialogue-box" id="dialogueBox">
       <div class="speaker-name" id="speakerName"></div>
       <div class="dialogue-text" id="dialogueText"></div>
       <div class="dialogue-next" id="dialogueNext">つづける <svg class="icon" style="width:14px;height:14px;"><use href="#i-arrow"/></svg></div>
+      <div class="dialogue-choices" id="dialogueChoices" style="display:none;"></div>
     </div>
   </section>
 
@@ -1294,9 +1311,13 @@ const REASON_OPTIONS = [
 const REASON_CORRECT = "C";
 
 const STORY_INTRO = [
-  { who:"serena", name:"セレナ・ヴァイス", text:"王家の肖像画から、人物が一人だけ消えたそうよ。しかも――誰もその人物を覚えていないと言うの。" },
-  { who:"hero", name:null, text:"記憶ごと消えた……ということか。" },
-  { who:"serena", name:"セレナ・ヴァイス", text:"ええ。あり得ない話だけど、あり得ないことが起きるのがこの月影都市よ。まずは現場、王立美術館を調べましょう。" },
+  { who:"serena", name:"セレナ・ヴァイス", text:"王家の肖像画から、人物が一人だけ消えたそうよ。しかも――誰もその人物を覚えていないと言うの。",
+    choices:[
+      { text:"記憶ごと消えた、ということか。", reply:"ええ。あり得ない話だけど、あり得ないことが起きるのがこの月影都市よ。" },
+      { text:"誰かが嘘をついている可能性は？", reply:"それも考えたわ。でも、複数人が同じように証言しているの……嘘とは思えない。" }
+    ]
+  },
+  { who:"serena", name:"セレナ・ヴァイス", text:"まずは現場、王立美術館を調べましょう。" },
   { who:"system", name:null, text:"探偵騎士団の紋章を掲げ、二人は王立美術館へと向かった。" }
 ];
 const STORY_PREBATTLE = [
@@ -1666,25 +1687,76 @@ $("#btnResetSettings").addEventListener("click", ()=>{
 /* ============================================================
    MAP
    ============================================================ */
+const MAP_NODES = {
+  museum: {
+    name:"王立美術館", art:"scene_museum", lv:"1", stamina:"1", enemy:"闇の魔導師",
+    locked:()=>false,
+    status:()=>({not_started:"事件受注可能", story_intro:"調査準備中", exploring:"調査中",
+      battle_pending:"異変あり", battle_won:"手がかりあり", case_file:"推理待ち", result:"解決演出中", solved:"解決済み"}[state.stage] || "事件受注可能"),
+    depart:()=>{
+      if(state.stage==="not_started"){
+        if(!state.playerName){ promptName(()=>{ state.stage="story_intro"; save(); routeToStage(); }); return; }
+        state.stage="story_intro"; save();
+      }
+      routeToStage();
+    }
+  },
+  ch2: {
+    name:"忘れられた回廊", art:"dot_ruins", lv:"3", stamina:"4", enemy:"未確認",
+    locked:()=>!ch2Unlocked(),
+    status:()=>ch2Unlocked() ? "挑戦可能" : "第一章クリアで解放",
+    depart:()=>{ if(ch2Unlocked()) ch2Start(); }
+  },
+  academy: { name:"王立魔法学院", art:"dot_academy", lv:"10", stamina:"8", enemy:"不明", locked:()=>true, status:()=>"未解放", depart:()=>{} },
+  capital: { name:"王城 奥書庫", art:"dot_cathedral", lv:"12", stamina:"9", enemy:"不明", locked:()=>true, status:()=>"未解放", depart:()=>{} },
+  forest: { name:"灰の森", art:"dot_forest", lv:"6", stamina:"5", enemy:"不明", locked:()=>true, status:()=>"未解放", depart:()=>{} },
+  underground: { name:"地下水路", art:"scene_underground", lv:"8", stamina:"6", enemy:"不明", locked:()=>true, status:()=>"未解放", depart:()=>{} }
+};
+let selectedMapNode = "museum";
+
 function renderMap(){
-  const statusMap = {
-    not_started:"事件受注可能", story_intro:"調査準備中", exploring:"調査中",
-    battle_pending:"異変あり", battle_won:"手がかりあり", case_file:"推理待ち", result:"解決演出中", solved:"解決済み"
-  };
-  $("#museumStatus").textContent = statusMap[state.stage] || "事件受注可能";
-  const ch2Node = $("#mapNodeCh2");
-  const unlocked = ch2Unlocked();
-  ch2Node.classList.toggle("locked", !unlocked);
-  $("#ch2Status").textContent = unlocked ? "挑戦可能" : "第一章クリアで解放";
+  $all(".map-node", $("#mapCanvas")).forEach(el=>{
+    const key = el.getAttribute("data-node");
+    const node = MAP_NODES[key];
+    if(!node) return;
+    el.classList.toggle("locked", node.locked());
+    el.classList.toggle("selected", key===selectedMapNode);
+    const statusEl = el.querySelector(".node-status");
+    if(statusEl) statusEl.textContent = node.status();
+  });
+  renderMapDetail();
 }
-$("#mapNodeMuseum").addEventListener("click", ()=>{
-  if(state.stage==="not_started"){
-    if(!state.playerName){ promptName(()=>{ state.stage="story_intro"; save(); routeToStage(); }); return; }
-    state.stage="story_intro"; save();
+function selectMapNode(key){
+  selectedMapNode = key;
+  renderMap();
+}
+function renderMapDetail(){
+  const node = MAP_NODES[selectedMapNode];
+  const panel = $("#mapDetailPanel");
+  if(!node){ panel.innerHTML = ""; return; }
+  const locked = node.locked();
+  const artStyle = ART[node.art] ? "background-image:url('"+ART[node.art]+"');" : "";
+  panel.innerHTML =
+    '<div class="mdp-art" style="'+artStyle+'">'+
+      '<div class="mdp-status-pill">'+node.status()+'</div>'+
+      '<div class="mdp-name">'+node.name+'</div>'+
+    '</div>'+
+    '<div class="mdp-body">'+
+      '<div class="mdp-info-row"><span class="k">推奨Lv</span><span class="v">'+node.lv+'</span></div>'+
+      '<div class="mdp-info-row"><span class="k">消費スタミナ</span><span class="v">'+node.stamina+'</span></div>'+
+      '<div class="mdp-info-row"><span class="k">出現する敵</span><span class="v">'+node.enemy+'</span></div>'+
+    '</div>'+
+    '<div class="mdp-footer">'+
+      '<button class="btn '+(locked?"btn-ghost":"btn-gold")+' btn-block" id="btnMapDepart" '+(locked?"disabled":"")+'>'+(locked?"未解放":"出発する")+'</button>'+
+    '</div>';
+  const btn = $("#btnMapDepart");
+  if(btn && !locked){
+    btn.addEventListener("click", ()=> node.depart());
   }
-  routeToStage();
+}
+$all(".map-node", $("#mapCanvas")).forEach(el=>{
+  el.addEventListener("click", ()=> selectMapNode(el.getAttribute("data-node")));
 });
-$("#mapNodeCh2").addEventListener("click", ()=>{ if(ch2Unlocked()) ch2Start(); });
 
 /* ============================================================
    CHAPTER 2 SKELETON
@@ -1737,13 +1809,20 @@ $("#btnCh2FromSolved").addEventListener("click", ()=>{ ch2Start(); });
 let storyLines = [];
 let storyIdx = 0;
 let storyOnEnd = null;
+let storyBacklog = [];
+let autoPlay = false;
+let autoTimer = null;
 
 function startStory(mode){
-  if(mode==="intro"){ storyLines = STORY_INTRO; storyOnEnd = ()=>{ state.stage="exploring"; state.bonds.serena=clamp((state.bonds.serena||0)+5,0,99); save(); renderExplore(); goto("screen-explore"); }; $("#storyHeader").textContent="王都・大通り"; }
-  if(mode==="prebattle"){ storyLines = STORY_PREBATTLE; storyOnEnd = ()=>{ state.stage="battle_pending"; save(); initBattle(); goto("screen-battle"); }; $("#storyHeader").textContent="肖像画の間"; }
-  if(mode==="postbattle"){ storyLines = STORY_POSTBATTLE; storyOnEnd = ()=>{ state.stage="case_file"; save(); renderCase(); goto("screen-case"); }; $("#storyHeader").textContent="肖像画の間"; }
-  if(mode==="ch2intro"){ storyLines = STORY_CH2_INTRO; storyOnEnd = ()=>{ state.chapter2Stage="previewed"; save(); renderCh2Stage(); goto("screen-ch2-preview"); }; $("#storyHeader").textContent="王城・忘れられた回廊"; }
+  if(mode==="intro"){ storyLines = STORY_INTRO.map(l=>({...l})); storyOnEnd = ()=>{ state.stage="exploring"; state.bonds.serena=clamp((state.bonds.serena||0)+5,0,99); save(); renderExplore(); goto("screen-explore"); }; $("#storyHeader").textContent="王都・大通り"; }
+  if(mode==="prebattle"){ storyLines = STORY_PREBATTLE.map(l=>({...l})); storyOnEnd = ()=>{ state.stage="battle_pending"; save(); initBattle(); goto("screen-battle"); }; $("#storyHeader").textContent="肖像画の間"; }
+  if(mode==="postbattle"){ storyLines = STORY_POSTBATTLE.map(l=>({...l})); storyOnEnd = ()=>{ state.stage="case_file"; save(); renderCase(); goto("screen-case"); }; $("#storyHeader").textContent="肖像画の間"; }
+  if(mode==="ch2intro"){ storyLines = STORY_CH2_INTRO.map(l=>({...l})); storyOnEnd = ()=>{ state.chapter2Stage="previewed"; save(); renderCh2Stage(); goto("screen-ch2-preview"); }; $("#storyHeader").textContent="王城・忘れられた回廊"; }
   storyIdx = 0;
+  storyBacklog = [];
+  autoPlay = false;
+  clearTimeout(autoTimer);
+  $("#btnAutoPlay").classList.remove("on");
   renderStoryLine();
 }
 function renderStoryLine(){
@@ -1753,7 +1832,29 @@ function renderStoryLine(){
   $("#speakerName").style.display = line.who==="system" ? "none" : "flex";
   $("#speakerName").innerHTML = (line.who==="hero"?iconSvg("i-sword",16):line.who==="serena"?iconSvg("i-rapier",16):"") + " " + speakerLabel;
   $("#dialogueText").textContent = line.text;
-  $("#dialogueNext").innerHTML = isLast ? "先へ進む "+iconSvg("i-arrow",14) : "つづける "+iconSvg("i-arrow",14);
+  storyBacklog.push({ speaker: line.who==="system" ? "" : speakerLabel, text: line.text });
+
+  if(line.choices){
+    $("#dialogueNext").style.display = "none";
+    const cel = $("#dialogueChoices");
+    cel.style.display = "flex";
+    cel.innerHTML = line.choices.map((c,i)=>'<button class="dialogue-choice-btn" data-choice="'+i+'">'+c.text+'</button>').join("");
+    $all(".dialogue-choice-btn", cel).forEach(btn=>{
+      btn.addEventListener("click", (e)=>{
+        e.stopPropagation();
+        const idx = parseInt(btn.getAttribute("data-choice"),10);
+        const choice = line.choices[idx];
+        storyLines.splice(storyIdx+1, 0, {who:"hero", name:null, text:choice.text}, {who:"serena", name:"セレナ・ヴァイス", text:choice.reply});
+        storyIdx++;
+        renderStoryLine();
+      });
+    });
+  } else {
+    $("#dialogueNext").style.display = "flex";
+    $("#dialogueChoices").style.display = "none";
+    $("#dialogueNext").innerHTML = isLast ? "先へ進む "+iconSvg("i-arrow",14) : "つづける "+iconSvg("i-arrow",14);
+  }
+
   const portrait = $("#storyPortrait");
   portrait.style.backgroundSize = "cover"; portrait.style.backgroundPosition = "center";
   portrait.style.backgroundImage = "none";
@@ -1766,12 +1867,39 @@ function renderStoryLine(){
   } else {
     portrait.innerHTML = iconSvg("i-moon",44); portrait.style.background="linear-gradient(135deg, rgba(217,181,106,0.22), rgba(217,181,106,0.04))"; portrait.style.color="var(--gold-bright)";
   }
+
+  clearTimeout(autoTimer);
+  if(autoPlay && !line.choices){
+    autoTimer = setTimeout(()=> advanceStory(), 2000);
+  }
 }
-$("#dialogueBox").addEventListener("click", ()=>{
+function advanceStory(){
+  const line = storyLines[storyIdx];
+  if(line && line.choices) return;
   if(storyIdx < storyLines.length-1){ storyIdx++; renderStoryLine(); }
-  else { if(storyOnEnd) storyOnEnd(); }
+  else { clearTimeout(autoTimer); if(storyOnEnd) storyOnEnd(); }
+}
+$("#dialogueBox").addEventListener("click", ()=> advanceStory());
+$("#btnSkip").addEventListener("click", (e)=>{ e.stopPropagation(); clearTimeout(autoTimer); if(storyOnEnd) storyOnEnd(); });
+$("#btnAutoPlay").addEventListener("click", (e)=>{
+  e.stopPropagation();
+  autoPlay = !autoPlay;
+  $("#btnAutoPlay").classList.toggle("on", autoPlay);
+  clearTimeout(autoTimer);
+  if(autoPlay){ autoTimer = setTimeout(()=> advanceStory(), 1200); }
 });
-$("#btnSkip").addEventListener("click", (e)=>{ e.stopPropagation(); if(storyOnEnd) storyOnEnd(); });
+$("#btnLog").addEventListener("click", (e)=>{
+  e.stopPropagation();
+  const html = storyBacklog.map(l=>
+    '<div style="margin-bottom:12px;"><div style="font-size:11px;color:var(--gold);margin-bottom:3px;">'+(l.speaker||"――")+'</div><div style="font-size:13px;color:var(--text-main);line-height:1.7;">'+l.text+'</div></div>'
+  ).join("");
+  openModal(
+    '<div class="modal-icon-row"><div class="icon-badge">'+iconSvg("i-scroll",20)+'</div><div><div class="modal-tag">これまでの会話</div><div class="modal-title">ログ</div></div></div>'+
+    '<div style="max-height:44vh;overflow-y:auto;">'+html+'</div>'+
+    '<button class="btn btn-primary btn-block" style="margin-top:10px;" id="mClose">閉じる</button>'
+  );
+  $("#mClose").addEventListener("click", closeModal);
+});
 
 /* ============================================================
    EXPLORE
