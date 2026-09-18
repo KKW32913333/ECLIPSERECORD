@@ -191,7 +191,7 @@ p{line-height:1.85; color:var(--text-sub); margin:0 0 .8em;}
 
 /* ============ HOME SCREEN ============ */
 .home-scene{
-  position:relative; height:250px; flex-shrink:0; overflow:hidden;
+  position:relative; min-height:326px; flex-shrink:0; overflow:hidden;
   background:#0b0c1c;
 }
 .home-scene-art{
@@ -202,47 +202,92 @@ p{line-height:1.85; color:var(--text-sub); margin:0 0 .8em;}
 .home-scene-overlay{
   position:absolute; inset:0;
   background:
-    linear-gradient(180deg, rgba(6,7,16,0.55) 0%, rgba(6,7,16,0.08) 32%, rgba(6,7,16,0.05) 62%, rgba(8,9,20,0.85) 100%);
+    linear-gradient(180deg, rgba(6,7,16,0.72) 0%, rgba(6,7,16,0.20) 40%, rgba(6,7,16,0.10) 62%, rgba(8,9,20,0.88) 100%);
 }
 
 .home-topbar{
-  position:absolute; top:0; left:0; right:0; z-index:2;
-  display:flex; align-items:center; justify-content:space-between;
-  padding:14px 16px;
+  position:relative; z-index:2;
+  display:flex; align-items:flex-start; justify-content:space-between;
+  padding:12px 14px 0;
+  gap:8px;
 }
 .player-chip{
   display:flex; align-items:center; gap:8px;
-  background:rgba(10,11,22,0.55); border:1px solid var(--line-hair); border-radius:var(--radius-pill);
-  padding:6px 12px 6px 6px; backdrop-filter:blur(4px);
+  background:rgba(9,10,20,0.6); border:1px solid var(--line-gold); border-radius:var(--radius-pill);
+  padding:5px 14px 5px 5px; backdrop-filter:blur(4px);
+  box-shadow:0 0 14px rgba(214,184,106,0.1);
 }
 .player-chip .avatar{
-  width:28px;height:28px;border-radius:50%; background:linear-gradient(135deg, rgba(124,174,255,0.4), rgba(141,140,255,0.3));
-  border:1px solid var(--line-gold); display:flex; align-items:center; justify-content:center;
+  width:34px;height:34px;border-radius:50%; background:linear-gradient(135deg, rgba(124,174,255,0.4), rgba(141,140,255,0.3)) center/cover;
+  border:1.5px solid var(--gold-bright); display:flex; align-items:center; justify-content:center; flex-shrink:0;
 }
-.player-chip .avatar .icon{ width:15px;height:15px; color:var(--gold-bright); }
-.player-chip .pname{ font-size:12px; font-weight:700; color:var(--moon-silver); line-height:1.1; }
-.player-chip .plevel{ font-size:9.5px; color:var(--gold); }
+.player-chip .avatar .icon{ width:17px;height:17px; color:var(--gold-bright); }
+.player-chip .pinfo{ min-width:88px; }
+.player-chip .pname-row{ display:flex; align-items:baseline; gap:6px; }
+.player-chip .plv-badge{ font-family:var(--font-head); font-size:11px; color:var(--gold-bright); }
+.player-chip .pname{ font-size:12px; font-weight:700; color:var(--moon-silver); line-height:1.2; }
+.exp-bar-track{ width:100%; height:4px; border-radius:2px; background:rgba(255,255,255,0.1); overflow:hidden; margin-top:3px; }
+.exp-bar-fill{ height:100%; background:linear-gradient(90deg,#7caeff,#c5e5ff); border-radius:2px; transition:width .5s ease; }
+.home-icon-row{ display:flex; gap:8px; flex-shrink:0; }
 .home-icon-btn{
-  width:34px;height:34px;border-radius:50%; background:rgba(10,11,22,0.55); border:1px solid var(--line-hair);
+  position:relative; width:34px;height:34px;border-radius:50%; background:rgba(9,10,20,0.6); border:1px solid var(--line-hair);
   display:flex;align-items:center;justify-content:center; color:var(--text-sub); backdrop-filter:blur(4px);
 }
 .home-icon-btn .icon{ width:16px;height:16px; }
-.home-icon-row{ display:flex; gap:8px; }
-.home-stat-row{
-  position:absolute; top:56px; left:16px; z-index:2; display:flex; gap:8px;
-}
-.stat-pill{
-  display:flex; align-items:center; gap:5px; background:rgba(10,11,22,0.5); border:1px solid var(--line-hair);
-  border-radius:var(--radius-pill); padding:4px 10px; font-size:10.5px; color:var(--text-sub);
-}
-.stat-pill .icon{ width:12px;height:12px; }
-.stat-pill.gold{ color:var(--gold-bright); border-color:var(--line-gold); }
+.icon-badge-dot{ position:absolute; top:-2px; right:-2px; width:14px;height:14px;border-radius:50%; background:var(--danger,#d87991); color:#fff; font-size:8.5px; display:flex; align-items:center; justify-content:center; border:1.5px solid #0b0c1c; }
 
-.home-below-scene{ position:relative; z-index:2; margin-top:-18px; padding:0 18px; flex-shrink:0; }
+.home-resource-row{ position:relative; z-index:2; display:flex; gap:7px; padding:9px 14px 0; }
+.resource-pill{
+  display:flex; align-items:center; gap:5px; background:rgba(9,10,20,0.55); border:1px solid var(--line-hair);
+  border-radius:var(--radius-pill); padding:4px 10px; font-size:11px; color:var(--text-sub); font-weight:600;
+}
+.resource-pill .icon{ width:13px;height:13px; }
+.resource-pill.gem{ color:#bcd0ff; border-color:rgba(124,174,255,0.4); }
+.resource-pill.gold{ color:var(--gold-bright); border-color:var(--line-gold); }
+.resource-pill.stamina{ color:#e8a9b8; border-color:rgba(216,121,145,0.35); }
+.pill-plus{ width:15px;height:15px;border-radius:50%; background:var(--gold-bright); color:#241a05; font-size:11px; font-weight:800; line-height:1; border:none; margin-left:2px; }
+
+.home-hero-lower{ position:relative; z-index:2; display:flex; gap:8px; padding:10px 14px 0; align-items:stretch; }
+.event-banner{
+  flex:1; min-width:0; display:flex; align-items:center; gap:9px;
+  background:rgba(9,10,20,0.6); border:1px solid var(--line-gold); border-radius:12px; padding:7px 10px;
+  backdrop-filter:blur(3px); box-shadow:0 0 16px rgba(214,184,106,0.1);
+}
+.event-banner-art{ width:38px;height:38px;border-radius:8px; background-size:cover; background-position:center top; flex-shrink:0; border:1px solid var(--line-hair); }
+.event-banner-text{ min-width:0; }
+.eb-tag{ font-size:9px; color:var(--gold); letter-spacing:.04em; }
+.eb-title{ font-size:12.5px; font-weight:700; color:var(--moon-silver); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.eb-sub{ font-size:9.5px; color:var(--text-faint); }
+.quick-menu-col{ display:flex; flex-direction:column; gap:6px; flex-shrink:0; }
+.quick-menu-btn{
+  position:relative; width:38px;height:38px;border-radius:10px; background:rgba(9,10,20,0.6); border:1px solid var(--line-hair);
+  display:flex;align-items:center;justify-content:center; color:var(--text-sub);
+}
+.quick-menu-btn .icon{ width:16px;height:16px; }
+
+.home-below-scene{ position:relative; z-index:2; margin-top:-14px; padding:0 16px; flex-shrink:0; }
 .title-block{ text-align:center; padding:6px 0 14px; }
 .game-title{ font-size:23px; color:var(--moon-silver); text-shadow:0 0 18px rgba(120,150,255,0.35); margin:2px 0 2px; }
 .game-title-en{ font-size:10px; letter-spacing:.16em; color:var(--gold); text-transform:uppercase; }
 .game-catch{ font-size:11.5px; color:var(--text-faint); margin-top:6px; }
+
+.home-main-row{ display:flex; gap:10px; align-items:stretch; margin-top:14px; }
+.btn-main-adventure{
+  flex:1; min-height:64px; border-radius:16px; border:1px solid var(--line-gold);
+  background:linear-gradient(135deg, #1a2550, #2f3f7a 55%, #3a3070);
+  box-shadow:0 10px 26px rgba(60,60,140,0.35), inset 0 0 0 1px rgba(197,229,255,0.06);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  position:relative; overflow:hidden;
+}
+.btn-main-adventure::before{ content:""; position:absolute; inset:0; background:radial-gradient(ellipse at 50% -20%, rgba(197,229,255,0.18), transparent 60%); }
+.btn-main-adventure:active{ transform:scale(0.98); }
+.bma-title{ position:relative; font-family:var(--font-head); font-size:16px; color:#fff; letter-spacing:.03em; }
+.bma-sub{ position:relative; font-size:10px; color:#cfe0ff; opacity:.85; }
+.home-submenu-col{ display:flex; flex-direction:column; gap:6px; }
+.submenu-icon-btn{ display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:none; width:58px; }
+.smib-icon{ width:44px;height:44px;border-radius:12px; background:var(--bg-panel-2); border:1px solid var(--line-hair); display:flex;align-items:center;justify-content:center; transform:rotate(45deg); }
+.smib-icon .icon{ width:19px;height:19px; color:var(--gold-bright); transform:rotate(-45deg); }
+.submenu-icon-btn span{ font-size:9.5px; color:var(--text-sub); }
 
 .case-card{
   background:linear-gradient(135deg, rgba(124,174,255,0.10), rgba(141,140,255,0.12));
@@ -250,6 +295,22 @@ p{line-height:1.85; color:var(--text-sub); margin:0 0 .8em;}
 }
 .case-card .cc-label{ font-size:10.5px; color:var(--gold); letter-spacing:.06em; margin-bottom:4px; }
 .case-card .cc-title{ font-family:var(--font-head); font-size:16px; color:var(--moon-silver); margin-bottom:8px; }
+
+.quest-progress-card{
+  display:flex; align-items:center; gap:10px; margin-top:12px;
+  background:linear-gradient(135deg, rgba(124,174,255,0.08), rgba(141,140,255,0.1));
+  border:1px solid var(--line-gold); border-radius:14px; padding:10px 12px;
+}
+.qpc-thumb{ width:44px;height:44px;border-radius:10px; background-size:cover; background-position:center; border:1px solid var(--line-hair); flex-shrink:0; }
+.qpc-body{ flex:1; min-width:0; }
+.qpc-body .cc-label{ font-size:9.5px; color:var(--gold); margin-bottom:2px; }
+.qpc-body .cc-title{ font-family:var(--font-head); font-size:13.5px; color:var(--moon-silver); margin-bottom:5px; }
+.qpc-progress-row{ display:flex; align-items:center; gap:7px; }
+.qpc-progress-row .bar-track{ flex:1; height:5px; border-radius:3px; background:rgba(255,255,255,0.08); overflow:hidden; }
+.qpc-progress-row .bar-fill{ height:100%; background:linear-gradient(90deg,#7caeff,#c5e5ff); border-radius:3px; transition:width .5s ease; }
+.qpc-progress-row span{ font-size:10px; color:var(--text-faint); flex-shrink:0; }
+.qpc-detail-btn{ flex-shrink:0; background:var(--bg-panel-2); border:1px solid var(--line-gold); color:var(--gold-bright); font-size:11px; font-weight:700; border-radius:var(--radius-pill); padding:8px 14px; }
+
 .home-main-actions{ padding:14px 18px 10px; display:flex; flex-direction:column; gap:10px; }
 
 /* ============ FIRST-TIME NAME MODAL uses generic modal ============ */
@@ -606,6 +667,10 @@ p{line-height:1.85; color:var(--text-sub); margin:0 0 .8em;}
 <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5L19 7"/></symbol>
 <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-9.3-9C1.2 7.8 3 4.5 6.5 4.5c2 0 3.5 1.2 4.5 2.7 1-1.5 2.5-2.7 4.5-2.7 3.5 0 5.3 3.3 3.8 6.5C19 15.6 12 20 12 20Z"/></symbol>
 <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+<symbol id="i-gem" viewBox="0 0 24 24"><path d="M4 9 8 4h8l4 5-8 11Z" stroke-linejoin="round"/><path d="M4 9h16M8 4l2 5-2 11M16 4l-2 5 2 11" stroke-linejoin="round"/></symbol>
+<symbol id="i-gift" viewBox="0 0 24 24"><rect x="4" y="9" width="16" height="11" rx="1"/><path d="M4 9h16M12 9v11M12 9C10 5 5 6 6 8.5S12 9 12 9ZM12 9c2-4 7-3 6-.5S12 9 12 9Z" stroke-linejoin="round"/></symbol>
+<symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M3.5 6 12 13l8.5-7"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
 <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 10a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 14 6 10Z"/><path d="M10 19a2 2 0 0 0 4 0"/></symbol>
 <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v2.4M12 18.6V21M21 12h-2.4M5.4 12H3M18.1 5.9l-1.7 1.7M7.6 16.4l-1.7 1.7M18.1 18.1l-1.7-1.7M7.6 7.6 5.9 5.9"/></symbol>
 <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v9M9.3 15c0 1.1 1.2 2 2.7 2s2.7-.7 2.7-1.8c0-2.6-5.4-1.4-5.4-4C9.3 9.7 10.5 9 12 9s2.7.7 2.7 1.8"/></symbol>
@@ -621,19 +686,41 @@ p{line-height:1.85; color:var(--text-sub); margin:0 0 .8em;}
       <div class="home-scene">
         <div class="home-scene-art" id="homeSceneArt"></div>
         <div class="home-scene-overlay"></div>
+
         <div class="home-topbar">
           <div class="player-chip">
-            <div class="avatar"><svg class="icon"><use href="#i-user"/></svg></div>
-            <div><div class="pname" id="hpName">アレン</div><div class="plevel" id="hpLevel">Lv.1 探偵騎士</div></div>
+            <div class="avatar" id="homeAvatarArt"><svg class="icon"><use href="#i-user"/></svg></div>
+            <div class="pinfo">
+              <div class="pname-row"><span class="plv-badge" id="hpLevelBadge">Lv.1</span><span class="pname" id="hpName">アレン</span></div>
+              <div class="exp-bar-track"><div class="exp-bar-fill" id="hpExpFill" style="width:0%;"></div></div>
+            </div>
           </div>
           <div class="home-icon-row">
-            <button class="home-icon-btn" id="btnBell"><svg class="icon"><use href="#i-bell"/></svg></button>
-            <button class="home-icon-btn" id="btnGear"><svg class="icon"><use href="#i-gear"/></svg></button>
+            <button class="home-icon-btn" id="btnBell"><svg class="icon"><use href="#i-bell"/></svg><span class="icon-badge-dot" id="bellBadge">1</span></button>
+            <button class="home-icon-btn" id="btnMenuHamburger"><svg class="icon"><use href="#i-menu"/></svg></button>
           </div>
         </div>
-        <div class="home-stat-row">
-          <div class="stat-pill"><svg class="icon"><use href="#i-heart"/></svg><span id="hpStamina">5 / 5</span></div>
-          <div class="stat-pill gold"><svg class="icon"><use href="#i-coin"/></svg><span id="hpGold">0</span></div>
+
+        <div class="home-resource-row">
+          <div class="resource-pill gem"><svg class="icon"><use href="#i-gem"/></svg><span id="hpGems">0</span></div>
+          <div class="resource-pill gold"><svg class="icon"><use href="#i-coin"/></svg><span id="hpGold">0</span></div>
+          <div class="resource-pill stamina"><svg class="icon"><use href="#i-heart"/></svg><span id="hpStamina">5 / 5</span><button class="pill-plus" id="btnStaminaPlus">＋</button></div>
+        </div>
+
+        <div class="home-hero-lower">
+          <button class="event-banner" id="btnEventBanner">
+            <div class="event-banner-art" id="eventBannerArt"></div>
+            <div class="event-banner-text">
+              <div class="eb-tag">期間限定イベント</div>
+              <div class="eb-title">月下の追憶</div>
+              <div class="eb-sub">あと5日</div>
+            </div>
+          </button>
+          <div class="quick-menu-col">
+            <button class="quick-menu-btn" id="btnQuickNotice" title="お知らせ"><svg class="icon"><use href="#i-gift"/></svg></button>
+            <button class="quick-menu-btn" id="btnQuickMail" title="メール"><svg class="icon"><use href="#i-mail"/></svg><span class="icon-badge-dot" id="mailBadge">1</span></button>
+            <button class="quick-menu-btn" id="btnQuickMission" title="ミッション"><svg class="icon"><use href="#i-scroll"/></svg></button>
+          </div>
         </div>
       </div>
 
@@ -644,20 +731,64 @@ p{line-height:1.85; color:var(--text-sub); margin:0 0 .8em;}
           <p class="game-catch">月蝕の夜、封印された真実が目を覚ます。</p>
         </div>
 
-        <div class="card case-card">
-          <div class="cc-label">進行中の事件</div>
-          <div class="cc-title">第一章「消えた肖像画」</div>
-          <p class="small" id="progressNote" style="margin:0;"></p>
+        <div class="home-main-row">
+          <button class="btn-main-adventure" id="btnStart">
+            <span class="bma-title" id="btnStartLabel">冒険を続ける</span>
+            <span class="bma-sub" id="btnStartSub">第一章 消えた肖像画</span>
+          </button>
+          <div class="home-submenu-col">
+            <button class="submenu-icon-btn" id="btnGoCharacters"><div class="smib-icon"><svg class="icon"><use href="#i-user"/></svg></div><span>キャラクター</span></button>
+            <button class="submenu-icon-btn" id="btnGoEquip"><div class="smib-icon"><svg class="icon"><use href="#i-shield"/></svg></div><span>装備</span></button>
+            <button class="submenu-icon-btn" id="btnGoShop"><div class="smib-icon"><svg class="icon"><use href="#i-gift"/></svg></div><span>ショップ</span></button>
+          </div>
         </div>
-      </div>
 
-      <div class="home-main-actions">
-        <button class="btn btn-primary btn-block" id="btnStart">
-          <svg class="icon"><use href="#i-arrow"/></svg><span id="btnStartLabel">冒険を続ける</span>
+        <button class="quest-progress-card" id="btnQuestDetail" style="width:100%;border:none;text-align:left;cursor:pointer;">
+          <div class="qpc-thumb" id="questThumb"></div>
+          <div class="qpc-body">
+            <div class="cc-label">進行中の事件</div>
+            <div class="cc-title">消えた肖像画</div>
+            <div class="qpc-progress-row"><div class="bar-track"><div class="bar-fill" id="questProgressFill" style="width:0%;"></div></div><span id="questProgressLabel">0 / 6</span></div>
+          </div>
+          <div class="qpc-detail-btn">詳細</div>
         </button>
+        <p class="small" id="progressNote" style="margin:10px 2px 0;"></p>
       </div>
     </div>
     <!-- bottom-nav injected by JS -->
+  </section>
+
+  <!-- ============ QUEST DETAIL ============ -->
+  <section class="screen" id="screen-quest-detail">
+    <div class="topbar">
+      <div><div class="chapter-tag">クエスト詳細</div><div class="screen-title">消えた肖像画</div></div>
+      <button class="tb-btn" id="btnQuestDetailBack">戻る</button>
+    </div>
+    <div class="screen-scroll">
+      <div class="card gold-edge">
+        <div class="kv-row"><span class="k">事件名</span><span class="v">消えた肖像画</span></div>
+        <div class="kv-row"><span class="k">発生場所</span><span class="v">王立美術館</span></div>
+        <div class="kv-row"><span class="k">推奨Lv</span><span class="v">1</span></div>
+        <div class="kv-row"><span class="k">進行度</span><span class="v" id="qdProgressLabel">0 / 6</span></div>
+      </div>
+      <div class="section-label">あらすじ</div>
+      <div class="card"><p style="margin:0;">王立美術館に展示されていた王家ゆかりの肖像画から、人物が一人だけ消失した。侵入の形跡はなく、額縁にも破損はない。探偵騎士団は、この不可解な事件の調査に乗り出した。</p></div>
+      <div class="section-label">報酬</div>
+      <div class="card">
+        <div class="kv-row"><span class="k">経験値</span><span class="v">+25</span></div>
+        <div class="kv-row"><span class="k">ゴールド</span><span class="v">+70 G</span></div>
+      </div>
+      <button class="btn btn-gold btn-block" style="margin-top:18px;" id="btnQuestDetailGo">調査へ向かう</button>
+    </div>
+  </section>
+
+  <!-- ============ SHOP ============ -->
+  <section class="screen" id="screen-shop">
+    <div class="topbar">
+      <div><div class="chapter-tag">ショップ</div><div class="screen-title">道具屋</div></div>
+      <div class="resource-pill gold" style="position:static;"><svg class="icon"><use href="#i-coin"/></svg><span id="shopGold">0</span></div>
+    </div>
+    <div class="screen-scroll with-nav" id="shopList"></div>
   </section>
 
   <!-- ============ SETTINGS ============ -->
@@ -1074,7 +1205,8 @@ function freshState(){
     reasonAttempts: 0,
     rewardsGranted: false,
     gold: 0,
-    inventory: ["moon_pendant","silver_ring","gold_brooch"],
+    gems: 1280,
+    inventory: [],
     bonds: { serena:0, noah:0, lucia:0, alto:0 },
     chapter2Stage: "not_started",
     settings: { bgm:true, se:true, reducedMotion:false },
@@ -1182,9 +1314,9 @@ const STORY_CH2_INTRO = [
 ];
 
 const ACCESSORIES = [
-  { id:"moon_pendant", name:"月光のペンダント", icon:"i-moon", art:"px_pendant", desc:"月明かりを宿した銀のペンダント。攻撃力がわずかに上昇する。", bonus:{atk:2, def:0} },
-  { id:"silver_ring", name:"銀の指輪", icon:"i-shield", art:"px_ring", desc:"探偵騎士団の紋章が刻まれた指輪。防御力がわずかに上昇する。", bonus:{atk:0, def:2} },
-  { id:"gold_brooch", name:"金のブローチ", icon:"i-star", art:"px_brooch", desc:"団長より賜った誉れのブローチ。攻撃力・防御力がともにわずかに上昇する。", bonus:{atk:1, def:1} }
+  { id:"moon_pendant", name:"月光のペンダント", icon:"i-moon", art:"px_pendant", desc:"月明かりを宿した銀のペンダント。攻撃力がわずかに上昇する。", bonus:{atk:2, def:0}, price:150 },
+  { id:"silver_ring", name:"銀の指輪", icon:"i-shield", art:"px_ring", desc:"探偵騎士団の紋章が刻まれた指輪。防御力がわずかに上昇する。", bonus:{atk:0, def:2}, price:150 },
+  { id:"gold_brooch", name:"金のブローチ", icon:"i-star", art:"px_brooch", desc:"団長より賜った誉れのブローチ。攻撃力・防御力がともにわずかに上昇する。", bonus:{atk:1, def:1}, price:220 }
 ];
 
 const SKILLS = {
@@ -1227,6 +1359,40 @@ function iconSvg(id, size){ return '<svg class="icon" style="width:'+(size||22)+
 function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
 function rnd(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
 
+function renderShop(){
+  $("#shopGold").textContent = state.gold;
+  const el = $("#shopList");
+  const notOwned = ACCESSORIES.filter(a=> !state.inventory.includes(a.id));
+  let html = '<div class="section-label">アクセサリー</div>';
+  if(notOwned.length===0){
+    html += '<div class="empty-note">すべてのアクセサリーを所持しています。</div>';
+  } else {
+    notOwned.forEach(item=>{
+      html += '<div class="card item-row" style="margin-bottom:10px;">'+
+        '<div class="icon-badge" style="'+itemBadgeStyle(item)+'">'+(ART[item.art]?"":iconSvg(item.icon,16))+'</div>'+
+        '<div style="flex:1;"><div class="item-name">'+item.name+'</div><div class="item-desc">'+item.desc+'</div></div>'+
+        '<button class="btn btn-gold btn-sm" data-buy="'+item.id+'">'+item.price+' G</button>'+
+      '</div>';
+    });
+  }
+  el.innerHTML = html;
+  $all("[data-buy]", el).forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const id = btn.getAttribute("data-buy");
+      const item = ACCESSORIES.find(a=>a.id===id);
+      if(!item) return;
+      if(state.gold < item.price){
+        simpleInfoModal("i-coin","ショップ","ゴールドが足りません","この装備を購入するには、あと "+(item.price-state.gold)+" G 必要です。");
+        return;
+      }
+      state.gold -= item.price;
+      state.inventory.push(id);
+      save();
+      simpleInfoModal("i-check","購入完了",item.name+"を購入しました","装備タブから着けることができます。");
+      renderShop();
+    });
+  });
+}
 function itemBadgeStyle(item){
   if(item && ART[item.art]) return "background-image:url('"+ART[item.art]+"');background-size:cover;background-position:center;";
   return "";
@@ -1252,7 +1418,7 @@ function loreCondMet(cond){
 }
 function ch2Unlocked(){ return state.stage==="solved"; }
 
-const NAV_SCREENS = ["home","map","case","characters","settings"];
+const NAV_SCREENS = ["home","map","case","characters","settings","shop"];
 function goto(screenId){
   $all(".screen").forEach(s=>s.classList.remove("active"));
   $("#"+screenId).classList.add("active");
@@ -1304,10 +1470,18 @@ function navGo(target){
    HOME
    ============================================================ */
 function renderHome(){
+  const c = state.chars.hero;
   $("#hpName").textContent = heroName();
-  $("#hpLevel").textContent = "Lv."+state.chars.hero.level+" 探偵騎士";
+  $("#hpLevelBadge").textContent = "Lv."+c.level;
+  $("#hpExpFill").style.width = clamp(c.exp/c.expNext*100,0,100)+"%";
+  $("#hpGems").textContent = state.gems;
   $("#hpGold").textContent = state.gold;
   $("#btnStartLabel").textContent = state.stage==="not_started" ? "冒険を始める" : "冒険を続ける";
+  $("#btnStartSub").textContent = "第一章 消えた肖像画";
+
+  const doneCount = HOTSPOTS.filter(h=>state.hotspots[h.id]).length;
+  $("#questProgressFill").style.width = clamp(doneCount/HOTSPOTS.length*100,0,100)+"%";
+  $("#questProgressLabel").textContent = doneCount+" / "+HOTSPOTS.length;
 
   const labelMap = {
     not_started:"まだ事件を受注していません。冒険マップから受注しよう。",
@@ -1335,7 +1509,40 @@ $("#btnBell").addEventListener("click", ()=>{
   );
   $("#mClose").addEventListener("click", closeModal);
 });
-$("#btnGear").addEventListener("click", ()=>{ renderSettings(); goto("screen-settings"); });
+$("#btnMenuHamburger").addEventListener("click", ()=>{ renderSettings(); goto("screen-settings"); });
+$("#btnStaminaPlus").addEventListener("click", (e)=>{
+  e.stopPropagation();
+  openModal(
+    '<div class="modal-icon-row"><div class="icon-badge">'+iconSvg("i-heart",20)+'</div><div><div class="modal-tag">スタミナ</div><div class="modal-title">回復アイテムはまだありません</div></div></div>'+
+    '<p>スタミナは時間経過で自然回復します（このプロトタイプでは消費・回復ロジックは未実装です）。</p>'+
+    '<button class="btn btn-primary btn-block" id="mClose">閉じる</button>'
+  );
+  $("#mClose").addEventListener("click", closeModal);
+});
+function simpleInfoModal(icon, tag, title, text){
+  openModal(
+    '<div class="modal-icon-row"><div class="icon-badge">'+iconSvg(icon,20)+'</div><div><div class="modal-tag">'+tag+'</div><div class="modal-title">'+title+'</div></div></div>'+
+    '<p>'+text+'</p><button class="btn btn-primary btn-block" id="mClose">閉じる</button>'
+  );
+  $("#mClose").addEventListener("click", closeModal);
+}
+$("#btnEventBanner").addEventListener("click", ()=> simpleInfoModal("i-moon","期間限定イベント","月下の追憶","かつて月影都市を騒がせた事件の記録が、期間限定で事件簿に追加される――という設定のイベントです。このプロトタイプでは実装されていません。"));
+$("#btnQuickNotice").addEventListener("click", ()=> simpleInfoModal("i-gift","お知らせ","運営からのお知らせ","現在、新しいお知らせはありません。"));
+$("#btnQuickMail").addEventListener("click", ()=> simpleInfoModal("i-mail","メール","受信箱","探偵騎士団本部より：「消えた肖像画」事件の調査、期待しています。"));
+$("#btnQuickMission").addEventListener("click", ()=> simpleInfoModal("i-scroll","ミッション","デイリーミッション","・事件現場を1ヶ所調査する\\n・バトルに1回勝利する\\n（進捗トラッキングは今後実装予定です）"));
+$("#btnGoCharacters").addEventListener("click", ()=>{ renderCharacters(); goto("screen-characters"); });
+$("#btnGoEquip").addEventListener("click", ()=>{ selectedCharKey="hero"; charActiveTab="equip"; renderCharacters(); goto("screen-characters"); });
+$("#btnGoShop").addEventListener("click", ()=>{ renderShop(); goto("screen-shop"); });
+$("#btnQuestDetail").addEventListener("click", ()=>{ renderQuestDetail(); goto("screen-quest-detail"); });
+$("#btnQuestDetailBack").addEventListener("click", ()=>{ renderHome(); goto("screen-home"); });
+$("#btnQuestDetailGo").addEventListener("click", ()=>{
+  if(!state.playerName){ promptName(()=> routeToStage()); }
+  else routeToStage();
+});
+function renderQuestDetail(){
+  const doneCount = HOTSPOTS.filter(h=>state.hotspots[h.id]).length;
+  $("#qdProgressLabel").textContent = doneCount+" / "+HOTSPOTS.length;
+}
 
 function promptName(onDone){
   openModal(
@@ -2261,6 +2468,9 @@ function applyArt(){
   setArt("nodeArtUnderground", "scene_underground");
   setArt("exploreLocationBadge", "scene_museum");
   setArt("enemyFigure", "px_darkmage");
+  setArt("homeAvatarArt", "px_hero");
+  setArt("eventBannerArt", "px_alto");
+  setArt("questThumb", "scene_museum");
   applyNavIcons();
 }
 function applyNavIcons(){
