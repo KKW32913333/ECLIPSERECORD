@@ -1,7 +1,7 @@
 {
-  "name": "月影の探偵騎士団 -Moonlit Detective Knights-",
-  "short_name": "月影の探偵騎士団",
-  "description": "剣と魔法の世界を舞台にした探偵ファンタジーRPG。魔法犯罪を調査・推理し、事件の真相を暴け。",
+  "name": "ECLIPSE RECORD（エクリプス・レコード）",
+  "short_name": "ECLIPSE RECORD",
+  "description": "月蝕の夜、封印された真実が目を覚ます――剣と魔法の世界を舞台にした探偵ファンタジーRPG。",
   "id": "/",
   "start_url": "./index.html",
   "scope": "./",

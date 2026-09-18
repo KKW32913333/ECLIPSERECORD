@@ -1,4 +1,4 @@
-// 月影の探偵騎士団 - Service Worker
+// ECLIPSE RECORD（エクリプス・レコード） - Service Worker
 // オフラインキャッシュを担当します。
 //
 // 【重要】資材（index.html・アイコン等）を更新したら、必ず CACHE_NAME の
