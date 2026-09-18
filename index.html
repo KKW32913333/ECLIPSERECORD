@@ -466,7 +466,13 @@ p{line-height:1.85; color:var(--text-sub); margin:0 0 .8em;}
 .reason-option .opt-letter{ flex-shrink:0; width:26px;height:26px;border-radius:50%; background:var(--royal-purple-soft); display:flex;align-items:center;justify-content:center; font-family:var(--font-head); font-size:13px; color:var(--gold-bright); }
 .reason-option.wrong{ border-color:var(--blood-red); opacity:.55; }
 .reason-option.correct{ border-color:var(--gold); background:linear-gradient(135deg, rgba(214,184,106,0.16), rgba(141,140,255,0.1)); }
+.reason-option.selected{ border-color:var(--arcane-blue); background:rgba(124,174,255,0.1); box-shadow:0 0 0 1px rgba(124,174,255,0.3); }
+.reason-option.selected .opt-letter{ background:var(--arcane-blue); color:#fff; }
 .reason-feedback{ font-size:12.5px; color:var(--blood-red); margin:-2px 0 12px; min-height:16px; }
+.evidence-chip{ display:inline-flex; align-items:center; gap:6px; background:var(--bg-panel-2); border:1px solid var(--line-hair); border-radius:var(--radius-pill); padding:8px 13px 8px 10px; margin:0 6px 8px 0; font-size:11.5px; color:var(--text-sub); }
+.evidence-chip .icon{ width:14px;height:14px; color:var(--text-faint); }
+.evidence-chip.selected{ border-color:var(--gold-bright); background:rgba(214,184,106,0.14); color:var(--moon-silver); }
+.evidence-chip.selected .icon{ color:var(--gold-bright); }
 
 /* ============ BATTLE SCREEN ============ */
 .battle-arena{ position:relative; margin:10px 14px 6px; border-radius:18px; overflow:hidden; min-height:220px;
@@ -1030,9 +1036,15 @@ p{line-height:1.85; color:var(--text-sub); margin:0 0 .8em;}
         <div class="card">
           <p style="margin-bottom:14px;color:var(--text-main);font-weight:600;">なぜ肖像画から人物だけが消えたのか？</p>
           <div id="reasonOptions"></div>
-          <div class="reason-feedback" id="reasonFeedback"></div>
-          <button class="btn btn-gold btn-block" id="btnSolve" style="display:none;">事件を解決する</button>
         </div>
+        <div class="section-label">根拠となる証拠を選ぼう <span id="reasonEvidenceCount" style="color:var(--text-faint);font-weight:400;">0/3</span></div>
+        <div class="card"><div id="reasonEvidencePicker"></div></div>
+        <div class="reason-feedback" id="reasonFeedback"></div>
+        <div style="display:flex;gap:10px;" id="reasonActionRow">
+          <button class="btn btn-ghost btn-block" id="btnReasonReset">リセット</button>
+          <button class="btn btn-gold btn-block" id="btnReasonConfirm">推理を確定</button>
+        </div>
+        <button class="btn btn-gold btn-block" style="margin-top:10px;display:none;" id="btnSolve">事件を解決する</button>
       </div>
 
     </div>
@@ -1320,6 +1332,7 @@ const REASON_OPTIONS = [
   { key:"D", text:"もともと、その人物は描かれていなかった" }
 ];
 const REASON_CORRECT = "C";
+const REQUIRED_EVIDENCE_IDS = ["portrait","corridor","footprints"];
 
 const STORY_INTRO = [
   { who:"serena", name:"セレナ・ヴァイス", text:"王家の肖像画から、人物が一人だけ消えたそうよ。しかも――誰もその人物を覚えていないと言うの。",
@@ -2309,34 +2322,78 @@ function renderCase(){
   renderEvidenceTab("testimonyList", "testimony", "まだ聞き込みをしていない。");
 
   // reasoning
-  const optEl = $("#reasonOptions");
-  optEl.innerHTML = "";
-  $("#reasonFeedback").textContent = "";
-  $("#btnSolve").style.display = state.reasonCorrect ? "flex" : "none";
-  REASON_OPTIONS.forEach(opt=>{
-    const btn = document.createElement("button");
-    btn.className = "reason-option" + (state.reasonCorrect && opt.key===REASON_CORRECT ? " correct" : "");
-    btn.innerHTML = '<div class="opt-letter">'+opt.key+'</div><div>'+opt.text+'</div>';
-    btn.disabled = state.reasonCorrect;
-    btn.addEventListener("click", ()=>{
-      if(opt.key===REASON_CORRECT){
-        state.reasonCorrect = true; save();
-        btn.classList.add("correct");
-        $("#reasonFeedback").style.color = "var(--gold)";
-        $("#reasonFeedback").textContent = "推理成功。すべての証拠と証言が一つの真実を示している。";
-        $all(".reason-option", optEl).forEach(b=>b.disabled=true);
-        $("#btnSolve").style.display = "flex";
-      } else {
-        state.reasonAttempts += 1; save();
-        btn.classList.add("wrong");
-        $("#reasonFeedback").style.color = "var(--blood-red)";
-        $("#reasonFeedback").textContent = "その推理は、集めた証拠・証言と矛盾している……もう一度考え直そう。";
-        setTimeout(()=>btn.classList.remove("wrong"), 900);
-      }
-    });
-    optEl.appendChild(btn);
-  });
+  renderReasonPanel();
 }
+let reasonSelectedOption = null;
+let reasonSelectedEvidenceIds = [];
+function renderReasonPanel(){
+  const optEl = $("#reasonOptions");
+  optEl.innerHTML = REASON_OPTIONS.map(opt=>{
+    const selected = reasonSelectedOption===opt.key;
+    const correctClass = (state.reasonCorrect && opt.key===REASON_CORRECT) ? " correct" : "";
+    return '<button class="reason-option'+(selected?" selected":"")+correctClass+'" data-opt="'+opt.key+'" '+(state.reasonCorrect?"disabled":"")+'>'+
+      '<div class="opt-letter">'+opt.key+'</div><div>'+opt.text+'</div></button>';
+  }).join("");
+  $all(".reason-option", optEl).forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      reasonSelectedOption = btn.getAttribute("data-opt");
+      renderReasonPanel();
+    });
+  });
+
+  const available = HOTSPOTS.filter(h=>state.evidence.includes(h.id));
+  const pickerEl = $("#reasonEvidencePicker");
+  if(available.length===0){
+    pickerEl.innerHTML = '<div class="empty-note">証拠がありません。探索画面で調査しよう。</div>';
+  } else {
+    pickerEl.innerHTML = available.map(h=>{
+      const sel = reasonSelectedEvidenceIds.includes(h.id);
+      return '<button class="evidence-chip'+(sel?" selected":"")+'" data-ev="'+h.id+'" '+(state.reasonCorrect?"disabled":"")+'>'+iconSvg(h.type==="testimony"?"i-user":"i-search",14)+'<span>'+h.evidenceTitle+'</span></button>';
+    }).join("");
+    $all(".evidence-chip", pickerEl).forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.getAttribute("data-ev");
+        const idx = reasonSelectedEvidenceIds.indexOf(id);
+        if(idx>=0) reasonSelectedEvidenceIds.splice(idx,1); else reasonSelectedEvidenceIds.push(id);
+        renderReasonPanel();
+      });
+    });
+  }
+  $("#reasonEvidenceCount").textContent = reasonSelectedEvidenceIds.length+"/"+REQUIRED_EVIDENCE_IDS.length;
+  $("#reasonActionRow").style.display = state.reasonCorrect ? "none" : "flex";
+  $("#btnSolve").style.display = state.reasonCorrect ? "flex" : "none";
+}
+$("#btnReasonReset").addEventListener("click", ()=>{
+  reasonSelectedOption = null;
+  reasonSelectedEvidenceIds = [];
+  $("#reasonFeedback").textContent = "";
+  renderReasonPanel();
+});
+$("#btnReasonConfirm").addEventListener("click", ()=>{
+  if(!reasonSelectedOption){
+    $("#reasonFeedback").style.color = "var(--blood-red)";
+    $("#reasonFeedback").textContent = "まず、推理の選択肢を選んでください。";
+    return;
+  }
+  const evidenceMatch = reasonSelectedEvidenceIds.length===REQUIRED_EVIDENCE_IDS.length &&
+    REQUIRED_EVIDENCE_IDS.every(id=>reasonSelectedEvidenceIds.includes(id));
+  if(reasonSelectedOption===REASON_CORRECT && evidenceMatch){
+    state.reasonCorrect = true; save();
+    $("#reasonFeedback").style.color = "var(--gold)";
+    $("#reasonFeedback").textContent = "推理成功。すべての証拠と証言が一つの真実を示している。";
+    renderReasonPanel();
+  } else {
+    state.reasonAttempts += 1; save();
+    $("#reasonFeedback").style.color = "var(--blood-red)";
+    if(reasonSelectedOption!==REASON_CORRECT){
+      $("#reasonFeedback").textContent = "その推理は、集めた証拠・証言と矛盾している……もう一度考え直そう。";
+    } else {
+      $("#reasonFeedback").textContent = "推理の方向性は悪くない。だが、根拠として選んだ証拠の組み合わせが違うようだ。";
+    }
+    const optBtn = $all(".reason-option", $("#reasonOptions")).find(b=>b.getAttribute("data-opt")===reasonSelectedOption);
+    if(optBtn){ optBtn.classList.add("wrong"); setTimeout(()=>optBtn.classList.remove("wrong"), 900); }
+  }
+});
 function renderEvidenceTab(elId, type, emptyMsg){
   const el = $("#"+elId);
   el.innerHTML = "";
